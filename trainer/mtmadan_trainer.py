@@ -13,3 +13,9 @@ class Mtmadan_trainer(Agent_trainer):
     def load_model(self):
         print("loading model")
 
+    def action(self):
+        print("action")
+
+    def update_params(self):
+        print("update params")
+
