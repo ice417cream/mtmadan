@@ -4,6 +4,9 @@ import tensorflow as tf
 import time
 import multiprocessing
 import threading
+import trainer.mtmadan_trainer as Trainer
+
+
 
 #测试用模块
 from gym import spaces
@@ -13,7 +16,10 @@ from gym import spaces
 N_WORKERS = 2
 OUT_GRAPH = True
 ANYS_ONLINE = True
+
+
 DISPLAY = True
+cpu_number = multiprocessing.cpu_count()
 
 class Worker():
     def __init__(self):
@@ -39,17 +45,24 @@ def make_env(scenario_name):
     return env,world
 
 
-def get_trainers():
-    print("make_env")
+def get_trainers(env,world,obs_shape_n,N_WORKERS=1):
+    print("get_trainers")
+    trainers = []
+    trainer = Trainer.Mtmadan_trainer
+    for i in range(N_WORKERS):
+        trainers.append(trainer(env,world.obs_shape_n,i))
+    return trainers
 
 
 if __name__=="__main__":
 
+    # arglist = parse_args() TODO
     env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
+    trainers = get_trainers(env,world,obs_shape_n,N_WORKERS)
 
-    # arglist = parse_args() TODO
+
     SESS = tf.Session()
     with tf.device("/cpu:0"):
         workers = []
