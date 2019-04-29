@@ -3,7 +3,6 @@ import tensorflow as tf
 import time
 import multiprocessing
 import threading
-import utils as U
 
 
 #初始参数 TODO
@@ -12,11 +11,10 @@ OUT_GRAPH = True
 ANYS_ONLINE = True
 DISPLAY = True
 
-class Worker(U.Net):
+class Worker():
     def __init__(self):
-
         print("Worker_init")
-        _Net = U.Net
+
     def work(self):
 
         print("work")
