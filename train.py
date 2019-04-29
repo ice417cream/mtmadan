@@ -16,10 +16,12 @@ ANYS_ONLINE = True
 DISPLAY = True
 cpu_number = multiprocessing.cpu_count()
 
-class Worker(object):
+class Worker():
     def __init__(self):
         print("Worker_init")
+
     def work(self):
+
         print("work")
 
 def make_env(scenario_name):
