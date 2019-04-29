@@ -1,8 +1,12 @@
+#liuchang @bit
 import numpy as np
 import tensorflow as tf
 import time
 import multiprocessing
 import threading
+
+#测试用模块
+from gym import spaces
 
 
 #初始参数 TODO
@@ -22,6 +26,7 @@ class Worker():
 def make_env(scenario_name):
 
     print("make_env")
+
     from multiagent.environment import MultiAgentEnv
     import multiagent.scenarios as scenarios
 
@@ -31,7 +36,7 @@ def make_env(scenario_name):
 
     env = MultiAgentEnv(world,scenario.reset_world,scenario.reward,scenario.observation)
 
-    return env
+    return env,world
 
 
 def get_trainers():
@@ -40,9 +45,9 @@ def get_trainers():
 
 if __name__=="__main__":
 
-    env = make_env("mtmadan_test")
+    env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
-    act_shape_n = [env.action_space[i] for i in range(env.n)]#返回值是离散空间Discrete
+    act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
 
     # arglist = parse_args() TODO
     SESS = tf.Session()
@@ -56,8 +61,20 @@ if __name__=="__main__":
     SESS.run(tf.global_variables_initializer())
 
     if DISPLAY:# TODO
+
+        random_a = tf.random_uniform([1,5], minval=0,maxval=1,dtype=tf.float32)#模型加载 TODO
+        step = 0
         print('DISPLAY')
-        exit()
+        while True:
+            env.reset()
+            with tf.Session() as sess:
+                for i in range(20):
+                    action_n = sess.run(random_a)
+                    new_obs_n, rew_n, done_n, info_n = env.step(action_n)
+                    time.sleep(0.1)
+                    env.render()
+            step = step + 1
+            print(step)
 
     worker_threads = []
     for worker in workers:
