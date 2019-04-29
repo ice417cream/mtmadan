@@ -50,7 +50,7 @@ def get_trainers(env,world,obs_shape_n,N_WORKERS=1):
     trainers = []
     trainer = Trainer.Mtmadan_trainer
     for i in range(N_WORKERS):
-        trainers.append(trainer(env,world.obs_shape_n,i))
+        trainers.append(trainer(env,world,obs_shape_n,i))
     return trainers
 
 
