@@ -20,3 +20,7 @@ class Agent_trainer(metaclass=ABCMeta):
     @abstractmethod
     def update_params(self):
         pass
+
+    @abstractmethod
+    def train(self):
+        pass

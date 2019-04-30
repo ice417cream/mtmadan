@@ -16,22 +16,18 @@ from gym import spaces
 N_WORKERS = 2
 OUT_GRAPH = True
 ANYS_ONLINE = True
-DISPLAY = False
+
+
+DISPLAY = True
 cpu_number = multiprocessing.cpu_count()
 
 class Worker():
     def __init__(self):
         print("Worker_init")
 
-    def get_trainers(env, world, obs_shape_n):  # 获取训练器的种类
-        print("get_trainers")
-        trainer = Trainer.Mtmadan_trainer(env, world, obs_shape_n)
-        return trainer
-
     def work(self):
 
         print("work")
-
 
 def make_env(scenario_name):
 
@@ -49,7 +45,13 @@ def make_env(scenario_name):
     return env,world
 
 
-
+def get_trainers(env,world,obs_shape_n,N_WORKERS=1):
+    print("get_trainers")
+    trainers = []
+    trainer = Trainer.Mtmadan_trainer
+    for i in range(N_WORKERS):
+        trainers.append(trainer(env,world.obs_shape_n,i))
+    return trainers
 
 
 if __name__=="__main__":
@@ -58,7 +60,7 @@ if __name__=="__main__":
     env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
-    trainers = get_trainers(env,world,obs_shape_n)
+    trainers = get_trainers(env,world,obs_shape_n,N_WORKERS)
 
 
     SESS = tf.Session()
