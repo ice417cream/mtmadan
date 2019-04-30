@@ -4,7 +4,7 @@ import tensorflow as tf
 import time
 import multiprocessing
 import threading
-import trainer.mtmadan_trainer as Trainer
+import trainer.A3C_trainer as Trainer
 
 #测试用模块
 from gym import spaces
@@ -58,9 +58,9 @@ def make_env(scenario_name):
 def get_trainers(env,world,obs_shape_n,N_WORKERS=1):
     print("get_trainers")
     trainers = []
-    trainer = Trainer.Mtmadan_trainer
+    trainer = Trainer.A3C_trainer
     for i in range(N_WORKERS):
-        trainers.append(trainer(env, world, obs_shape_n, i))
+        trainers.append(trainer('worker_1', env))
     return trainers
 
 
