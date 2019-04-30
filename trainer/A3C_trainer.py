@@ -4,14 +4,19 @@ import gym
 from trainer.trainer_base import Agent_trainer
 
 class A3C_trainer(Agent_trainer):
-    def __init__(self, scope,N_S,N_A,globalAC = None):
+    def __init__(self, scope,N_S,N_A,SESS,globalAC = None):
         print("A3C_trianer init")
+        self.SESS = SESS
+        self.OPT_A = tf.train.RMSPropOptimizer(0.001, name='RMSPropA')
+        self.OPT_C = tf.train.RMSPropOptimizer(0.01, name='RMSPropC')
+
         if scope == 'Global_Net':   # get global network
             print('global init')
             with tf.variable_scope(scope):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
                 self.a_params, self.c_params = self.build_net(scope,N_A)[-2:]
-                print('get global params')
+                a = tf.constant(1)
+                print(SESS.run(a))
         else:   # local net, calculate losses
             with tf.variable_scope(scope):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
@@ -35,7 +40,7 @@ class A3C_trainer(Agent_trainer):
                     self.a_loss = tf.reduce_mean(-self.exp_v)
 
                 with tf.name_scope('choose_a'):  # use local params to choose action
-                    self.A = tf.squeeze(normal_dist.sample(1), axis=[0, 1])
+                    self.A = mu#lc
                 with tf.name_scope('local_grad'):
                     self.a_grads = tf.gradients(self.a_loss, self.a_params)
                     self.c_grads = tf.gradients(self.c_loss, self.c_params)
@@ -45,8 +50,8 @@ class A3C_trainer(Agent_trainer):
                     self.pull_a_params_op = [l_p.assign(g_p) for l_p, g_p in zip(self.a_params, globalAC.a_params)]
                     self.pull_c_params_op = [l_p.assign(g_p) for l_p, g_p in zip(self.c_params, globalAC.c_params)]
                 with tf.name_scope('push'):
-                    self.update_a_op = OPT_A.apply_gradients(zip(self.a_grads, globalAC.a_params))
-                    self.update_c_op = OPT_C.apply_gradients(zip(self.c_grads, globalAC.c_params))
+                    self.update_a_op = self.OPT_A.apply_gradients(zip(self.a_grads, globalAC.a_params))
+                    self.update_c_op = self.OPT_C.apply_gradients(zip(self.c_grads, globalAC.c_params))
 
     def build_net(self,scope,N_A):
         print("building net")
@@ -62,20 +67,22 @@ class A3C_trainer(Agent_trainer):
             v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')  # state value
         a_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/actor')
         c_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/critic')
+        print("net built",mu,sigma)
         return mu, sigma, v, a_params, c_params
 
     def update_global(self, feed_dict):
         print("update_global")
-        SESS.run([self.update_a_op, self.update_c_op], feed_dict)
+        self.SESS.run([self.update_a_op, self.update_c_op], feed_dict)
 
     def pull_global(self):  # run by a local
         print("PULL_global")
-        SESS.run([self.pull_a_params_op, self.pull_c_params_op])
+        self.SESS.run([self.pull_a_params_op, self.pull_c_params_op])
 
-    def action(self, s):
+    def action(self,s):#/lc TODO
         print("action")
-        s = s[np.newaxis, :]
-        return SESS.run(self.A, {self.s: s})
+        ss = s[0]
+        s = ss[np.newaxis, :]
+        return self.SESS.run(self.A, {self.s: s})
 
     def update_params(self):
         print("update params")

@@ -1,7 +1,7 @@
 from trainer.trainer_base import Agent_trainer
 
 class Mtmadan_trainer(Agent_trainer):
-    def __init__(self, env, world, obs_shape_n, worker_count):
+    def __init__(self, env, world, obs_shape_n, worker_count=1):
         print("mtmadan trianer init")
 
     def train(self):
