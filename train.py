@@ -21,12 +21,10 @@ cpu_number = multiprocessing.cpu_count()
 GLOBAL_NET_SCOPE = 'Global_Net'
 
 class Worker():
-    def __init__(self,name,env, world, obs_shape_n,NAME='sample',GLOBAL_NET_SCOPE = 'Global_Net'):
+    def __init__(self,name,env, world, obs_shape_n,SESS,GLOBAL_AC,NAME='sample',GLOBAL_NET_SCOPE = 'Global_Net'):
         print("Worker_init")
         print("get trainer")
-        print(type(env.action_space[0]))
-        self.trainer = Trainer.A3C_trainer(name,obs_shape_n[0][0],world.dim_p * 2 + 1)#[0][0]is tuple-shape
-
+        self.trainer = Trainer.A3C_trainer(name,obs_shape_n[0][0],world.dim_p * 2 + 1,SESS,GLOBAL_AC)#[0][0]is tuple-shape
     def work(self):
 
         print("work")
@@ -56,15 +54,15 @@ if __name__=="__main__":
     env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
-
-
-
     SESS = tf.Session()
+
     with tf.device("/cpu:0"):
         workers = []
+        GLOBAL_AC = Trainer.A3C_trainer('Global_Net',obs_shape_n[0][0],world.dim_p * 2 + 1,SESS)
         for i in range(N_WORKERS):#TODO
             i_name = 'W_%i' % i
-            workers.append(Worker(i_name,env, world, obs_shape_n)) #TODO
+            workers.append(Worker(i_name,env, world, obs_shape_n,SESS,GLOBAL_AC)) #TODO
+        print("worker done")
 
     COORD = tf.train.Coordinator()
     SESS.run(tf.global_variables_initializer())
