@@ -4,7 +4,7 @@ import tensorflow as tf
 import time
 import multiprocessing
 import threading
-import trainer.mtmadan_trainer as Trainer
+import trainer.A3C_trainer as Trainer
 
 
 
@@ -18,19 +18,14 @@ OUT_GRAPH = True
 ANYS_ONLINE = True
 DISPLAY = False
 cpu_number = multiprocessing.cpu_count()
+GLOBAL_NET_SCOPE = 'Global_Net'
 
 class Worker():
-    def __init__(self,env, world, obs_shape_n, N_WORKERS=1):
+    def __init__(self,name,env, world, obs_shape_n,NAME='sample',GLOBAL_NET_SCOPE = 'Global_Net'):
         print("Worker_init")
-        self.trainers = self.get_trainers(env, world, obs_shape_n,N_WORKERS=1)
-
-    def get_trainers(self,env, world, obs_shape_n, N_WORKERS=1):
-        print("get_trainers")
-        trainers = []
-        trainer = Trainer.Mtmadan_trainer
-        for i in range(N_WORKERS):
-            trainers.append(trainer(env, world, obs_shape_n, i))
-        return trainers
+        print("get trainer")
+        print(type(env.action_space[0]))
+        self.trainer = Trainer.A3C_trainer(name,obs_shape_n[0][0],world.dim_p * 2 + 1)#[0][0]is tuple-shape
 
     def work(self):
 
@@ -69,7 +64,7 @@ if __name__=="__main__":
         workers = []
         for i in range(N_WORKERS):#TODO
             i_name = 'W_%i' % i
-            workers.append(Worker(env, world, obs_shape_n, N_WORKERS)) #TODO
+            workers.append(Worker(i_name,env, world, obs_shape_n)) #TODO
 
     COORD = tf.train.Coordinator()
     SESS.run(tf.global_variables_initializer())
