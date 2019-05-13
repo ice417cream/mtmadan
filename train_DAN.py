@@ -27,11 +27,21 @@ GAMMA = 0.9
 GLOBAL_RUNNING_R=[]
 
 class Worker():
-    def __init__(self,name,env, world, obs_shape_n,SESS,GLOBAL_AC,NAME='sample',GLOBAL_NET_SCOPE = 'Global_Net'):
+    def __init__(self):
         print("Worker_init")
 
-    def work(self):
-        print("work")
+    def act(self,dic,j):
+        c = dic[str(j)]
+        print("act")
+        for i in range(j):
+            c.append(j)
+        dic[str(j)]=c
+
+    def update(self,id):
+        print("update",id)
+
+
+
 
 #creat the world
 def make_env(scenario_name):
@@ -58,46 +68,28 @@ if __name__=="__main__":
     env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
-    SESS = tf.Session()
-
-    with tf.device("/cpu:0"):
-        workers = []
-        GLOBAL_AC = Trainer.A3C_trainer('Global_Net',obs_shape_n[0][0],world.dim_p * 2 + 1,SESS)
-        for i in range(N_WORKERS):#TODO
-            i_name = 'W_%i' % i
-            workers.append(Worker(i_name,env, world, obs_shape_n,SESS,GLOBAL_AC)) #TODO
-        print("worker done")
-
-    COORD = tf.train.Coordinator()
-    SESS.run(tf.global_variables_initializer())
-
-    if DISPLAY:# TODO
+    global agent_id
 
 
-        step = 0
-        action_n = []
-        print('DISPLAY')
-        while True:
-            env.reset()
-            with tf.Session() as sess:
-                for i in range(20):
-                    for j in range(len(act_shape_n)):
-                        action_n.append(tuple(np.random.rand(5)))
-                    new_obs_n, rew_n, done_n, info_n = env.step(action_n)
-                    time.sleep(0.1)
-                    env.render()
-            step = step + 1
-            print(step)
+    a = Worker()
+    b = Worker()
+    with multiprocessing.Manager() as manager:
+        d = manager.dict()
+        p_list = []
+        for k in range(4):
+            d[str(k)]=[0]
 
-    worker_threads = []
-    for worker in workers:
-        job = lambda:worker.work()
-        t = threading.Thread(target=job)
-        t.start()
-        worker_threads.append(t)
-    COORD.join(worker_threads)
+        for j in range(10):
+            pool = multiprocessing.Pool(processes=4)
+            for i in range(4):
+                pool.apply_async(a.act, (d,i))
+            pool.close()
+            pool.join()
+            print(d)
 
-    if ANYS_ONLINE:# TODO
-        print('ANYS_ONLINE')
+
+
+
+
 
 
