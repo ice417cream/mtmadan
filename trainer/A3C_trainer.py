@@ -16,7 +16,6 @@ class A3C_trainer(Agent_trainer):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
                 self.a_params, self.c_params = self.build_net(scope,N_A)[-2:]
                 a = tf.constant(1)
-                print(SESS.run(a))
         else:   # local net, calculate losses
             with tf.variable_scope(scope):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
@@ -58,7 +57,7 @@ class A3C_trainer(Agent_trainer):
         w_init = tf.random_normal_initializer(0., .1)
         # 建立actor的网络
         with tf.variable_scope('actor'):
-            l_a = tf.layers.dense(self.s, 200, tf.nn.relu6, kernel_initializer=w_init, name='la')
+            l_a = tf.layers.dense(self.s, 20000000, tf.nn.relu6, kernel_initializer=w_init, name='la')
             mu = tf.layers.dense(l_a, N_A, tf.nn.tanh, kernel_initializer=w_init, name='mu')
             sigma = tf.layers.dense(l_a, N_A, tf.nn.softplus, kernel_initializer=w_init, name='sigma')
         # 建立critic的网络
@@ -67,28 +66,27 @@ class A3C_trainer(Agent_trainer):
             v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')  # state value
         a_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/actor')
         c_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/critic')
-        print("net built",mu,sigma)
+
         return mu, sigma, v, a_params, c_params
 
     def update_global(self, feed_dict):
-        print("update_global")
+
         self.SESS.run([self.update_a_op, self.update_c_op], feed_dict)
 
     def pull_global(self):  # run by a local
-        print("PULL_global")
+
         self.SESS.run([self.pull_a_params_op, self.pull_c_params_op])
 
     def action(self,s):#/lc TODO
-        print("action")
         ss = s[0]
         s = ss[np.newaxis, :]
         return self.SESS.run(self.A, {self.s: s})
 
     def update_params(self):
-        print("update params")
+        pass
 
     def save_model(self):
-        print("saving model")
+        pass
 
     def load_model(self):
-        print("loading model")
+        pass

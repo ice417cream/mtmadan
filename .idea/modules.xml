@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/mtmadan.iml" filepath="$PROJECT_DIR$/.idea/mtmadan.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../multiagent-particle-envs/.idea/multiagent-particle-envs.iml" filepath="$PROJECT_DIR$/../multiagent-particle-envs/.idea/multiagent-particle-envs.iml" />
     </modules>
   </component>
 </project>

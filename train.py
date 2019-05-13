@@ -13,7 +13,7 @@ from gym import spaces
 
 
 #初始参数 TODO
-N_WORKERS = 2
+N_WORKERS = 15
 OUT_GRAPH = True
 ANYS_ONLINE = True
 DISPLAY = False
@@ -42,9 +42,6 @@ class Worker():
             s = self.env.reset()  # 重启世界，返回值是obs
             ep_r = 0
             for ep_t in range(MAX_EP_STEP):  # 这里规定了更新步长  200
-                # if self.name == 'W_0':
-                #     self.env.render()
-                # a = self.AC.choose_action(s)
                 a = self.trainer.action(s)#lc
                 s_, r, done, info = self.env.step(a)  # 基于计算的随机数和边界选择一个作为动作,并输入到环境中去，用于获得新的动作、奖励等
                 done = True if ep_t == MAX_EP_STEP - 1 else False
@@ -82,11 +79,11 @@ class Worker():
                         GLOBAL_RUNNING_R.append(ep_r)
                     else:
                         GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
-                    print(
-                        self.name,
-                        "Ep:", GLOBAL_EP,
-                        "| Ep_r: %i" % GLOBAL_RUNNING_R[-1],
-                    )
+                    # print(
+                    #     self.name,
+                    #     "Ep:", GLOBAL_EP,
+                    #     "| Ep_r: %i" % GLOBAL_RUNNING_R[-1],
+                    # )
                     GLOBAL_EP += 1
                     break
 
