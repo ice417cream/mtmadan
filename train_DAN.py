@@ -71,18 +71,19 @@ if __name__=="__main__":
 
     w_init = tf.random_normal_initializer(0.,.1)
     with tf.variable_scope('actor'):
-        l_a = tf.layers.dense(stauts_n,32,tf.nn.relu6,kernel_initializer=w_init,name='l_a')
+        l_a = tf.layers.dense(stauts_n,200,tf.nn.relu6,kernel_initializer=w_init,name='l_a')
         mu = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.tanh,kernel_initializer=w_init,name='mu')
         sigma = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.softplus,kernel_initializer=w_init,name='sigma')
-    _action_n = tf.distributions.Normal(mu,sigma).sample(1)
+    _action_n = tf.distributions.Normal(mu,sigma)
+    #td = tf.subtract(v_target, v, name='TD_error')
     #a_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='/actor')
     with tf.name_scope('a_loss'):
-        log_prob = tf.distributions.Normal(mu,sigma).log_prob(actions_n)
-        exp_v = log_prob
-        entropy = tf.distributions.Normal(mu,sigma).entropy()  # encourage exploration
+        log_prob = _action_n.log_prob(actions_n)
+        exp_v = log_prob #* tf.stop_gradient(td)
+        entropy = _action_n.entropy()  # encourage exploration
         exp_v = 0.01 * entropy + exp_v
-        a_loss = tf.reduce_mean(-exp_v)
-    train_step = tf.train.GradientDescentOptimizer(0.001).minimize(a_loss)
+        a_loss = tf.reduce_mean(exp_v)
+        train_step = tf.train.AdamOptimizer(0.001).minimize(a_loss)
 
 
     with tf.Session() as sess:
@@ -91,18 +92,19 @@ if __name__=="__main__":
         data1 = np.ones([1000,5], dtype=np.float32)
         action_n  = []
         action_n.append(data1)
-        for i in range(50):
+        for i in range(5000):
 
             data = {stauts_n: _data, actions_n: data1}
             time_start_action = time.time()
-            print("log_prob is ", sess.run(log_prob, feed_dict=data))
-            print("entropy is ", sess.run(entropy, feed_dict=data))
+            #print("log_prob is ", sess.run(log_prob, feed_dict=data))
+            #print("entropy is ", sess.run(entropy, feed_dict=data))
             print("a_loss is ", sess.run(a_loss, feed_dict=data))
-            action_n.append(sess.run(train_step, feed_dict=data))
+            action_n = (sess.run(_action_n.sample(1), feed_dict=data))
+            sess.run(train_step, feed_dict=data)
             time_for_action = time.time() - time_start_action
             new_obs_n, rew_n, done_n, info_n = env.step(action_n[0])
             _data = new_obs_n
-            data1 = action_n[-2]
+            data1 = action_n[-1]
             print('='*500)
             print(time_for_action)
             env.render()
