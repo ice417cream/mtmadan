@@ -40,10 +40,6 @@ class Worker():
         print("update", id)
 
 
-
-
-
-
 #creat the world
 def make_env(scenario_name):
 
@@ -71,7 +67,7 @@ if __name__=="__main__":
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
 
     stauts_n = tf.placeholder(tf.float32,[None,obs_shape_n[0][0]],'stauts-input')
-    actions_n = tf.placeholder(tf.float32,[None,world.dim_p*2-1],'actions-input')
+    actions_n = tf.placeholder(tf.float32,[None,world.dim_p*2+1],'actions-input')
 
     w_init = tf.random_normal_initializer(0.,.1)
     with tf.variable_scope('actor'):
@@ -79,18 +75,34 @@ if __name__=="__main__":
         mu = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.tanh,kernel_initializer=w_init,name='mu')
         sigma = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.softplus,kernel_initializer=w_init,name='sigma')
     _action_n = tf.distributions.Normal(mu,sigma).sample(1)
+    #a_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='/actor')
+    with tf.name_scope('a_loss'):
+        log_prob = tf.distributions.Normal(mu,sigma).log_prob(actions_n)
+        exp_v = log_prob
+        entropy = tf.distributions.Normal(mu,sigma).entropy()  # encourage exploration
+        exp_v = 0.01 * entropy + exp_v
+        a_loss = tf.reduce_mean(-exp_v)
+    train_step = tf.train.GradientDescentOptimizer(0.001).minimize(a_loss)
 
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         _data = env.reset()
+        data1 = np.ones([1000,5], dtype=np.float32)
+        action_n  = []
+        action_n.append(data1)
         for i in range(50):
-            data = {stauts_n: _data}
+
+            data = {stauts_n: _data, actions_n: data1}
             time_start_action = time.time()
-            action_n = sess.run(_action_n, feed_dict=data)
+            print("log_prob is ", sess.run(log_prob, feed_dict=data))
+            print("entropy is ", sess.run(entropy, feed_dict=data))
+            print("a_loss is ", sess.run(a_loss, feed_dict=data))
+            action_n.append(sess.run(train_step, feed_dict=data))
             time_for_action = time.time() - time_start_action
             new_obs_n, rew_n, done_n, info_n = env.step(action_n[0])
             _data = new_obs_n
+            data1 = action_n[-2]
             print('='*500)
             print(time_for_action)
             env.render()
