@@ -31,14 +31,15 @@ class Worker():
         print("Worker_init")
 
     def act(self,dic,j):
-        c = dic[str(j)]
-        print("act")
-        for i in range(j):
-            c.append(j)
-        dic[str(j)]=c
 
-    def update(self,id):
-        print("update",id)
+        print("act",j)
+
+
+    def update(self,id,action,j):
+
+        print("update", id)
+
+
 
 
 
@@ -48,10 +49,10 @@ def make_env(scenario_name):
 
     print("make_env")
 
-    from multiagent.environment import MultiAgentEnv
-    import multiagent.scenarios as scenarios
+    from MAEnv.environment import MultiAgentEnv
+    import MAEnv.scenarios as scenarios
 
-    scenario = scenarios.load(scenario_name+".py").Scenario()
+    scenario = scenarios.load(scenario_name+".py").Scenario()#建立一个类
 
     world = scenario.make_world()
 
@@ -68,24 +69,75 @@ if __name__=="__main__":
     env, world= make_env("mtmadan_test")
     obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
     act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
-    global agent_id
+
+    stauts_n = tf.placeholder(tf.float32,[None,obs_shape_n[0][0]],'stauts-input')
+    actions_n = tf.placeholder(tf.float32,[None,world.dim_p*2-1],'actions-input')
+
+    w_init = tf.random_normal_initializer(0.,.1)
+    with tf.variable_scope('actor'):
+        l_a = tf.layers.dense(stauts_n,32,tf.nn.relu6,kernel_initializer=w_init,name='l_a')
+        mu = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.tanh,kernel_initializer=w_init,name='mu')
+        sigma = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.softplus,kernel_initializer=w_init,name='sigma')
+    _action_n = tf.distributions.Normal(mu,sigma).sample(1)
 
 
-    a = Worker()
-    b = Worker()
-    with multiprocessing.Manager() as manager:
-        d = manager.dict()
-        p_list = []
-        for k in range(4):
-            d[str(k)]=[0]
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        _data = env.reset()
+        for i in range(50):
+            data = {stauts_n: _data}
+            time_start_action = time.time()
+            action_n = sess.run(_action_n, feed_dict=data)
+            time_for_action = time.time() - time_start_action
+            new_obs_n, rew_n, done_n, info_n = env.step(action_n[0])
+            _data = new_obs_n
+            print('='*500)
+            print(time_for_action)
+            env.render()
+        print(action_n)
 
-        for j in range(10):
-            pool = multiprocessing.Pool(processes=4)
-            for i in range(4):
-                pool.apply_async(a.act, (d,i))
-            pool.close()
-            pool.join()
-            print(d)
+    # 测试动作的
+    # action_nn=[]
+    # for i in range(1000):
+    #     action_nn.append([0,1,0,1,0])
+    # print(action_nn)
+
+
+
+    # 随机生成动作指令，大约e-5的量级，可以承受
+    # time_start_action = time.time()
+    # action_n = np.random.rand(1000,5)
+    # time_for_action = time.time()-time_start_action
+
+
+
+
+    # global agent_id
+    #
+    #
+    # a = Worker()
+    # b = Worker()
+    # with multiprocessing.Manager() as manager:
+    #     d = manager.dict()
+    #     e = multiprocessing.Event()
+    #     action = manager.dict()
+    #     p_list = []
+    #
+    #     for i in range(4):
+    #         d[str(i)] = 0
+    #     for i in range(10):
+    #         action[str(i)] = 0
+    #
+    #     for j in range(10):
+    #         pool = multiprocessing.Pool(processes=5)
+    #         for i in range(4):
+    #             pool.apply_async(a.act, (d,i))
+    #         pool.apply(a.update, (5,action,j))
+    #     pool.close()
+    #     pool.join()
+    #     print(action)
+
+
 
 
 
