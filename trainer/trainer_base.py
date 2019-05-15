@@ -6,11 +6,11 @@ class Agent_trainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def load_model(self):
+    def load_model(self, path):
         pass
 
     @abstractmethod
-    def save_model(self):
+    def save_model(self, path):
         pass
 
     @abstractmethod
@@ -18,5 +18,5 @@ class Agent_trainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def update_params(self, S, R, A):
+    def update_params(self, S, R, A, batch_size):
         pass

@@ -49,29 +49,31 @@ class mtmadan_trainer(Agent_trainer):
             v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')
         return mu, sigma, v
 
-    def save_model(self):
+    def save_model(self, path):
         print("saving model")
+        tf.train.Saver().save(self.sess, save_path=path)
 
-    def load_model(self):
+    def load_model(self, path):
         print("loading model")
+        tf.train.Saver().restore(self.sess, save_path=path)
 
     def action(self, s_n):
         # print("action")
         action_n = self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: s_n})
         return action_n
 
-    def compute_global_r(self, obs_n_batch, reward_n_batch, actions_n_batch, GAMMA):
+    def compute_global_r(self, obs_n_batch, reward_n_batch, actions_n_batch, batch_size, GAMMA):
         print("compute_global_reward")
         print(reward_n_batch)
         reward_n_batch = np.array(reward_n_batch)
         obs_n_batch = np.array(obs_n_batch)
-        test = tf.reduce_sum(reward_n_batch, 0)
-        a = self.sess.run(test)
-        max_r = tf.argmax(test)
-        b = self.sess.run(max_r)
-        obs_n = tf.squeeze(tf.slice(obs_n_batch, [0, b, 0], [3,1,6]))
-        rew_n = tf.slice(reward_n_batch, [0, b], [3,1])
-        act_n = tf.squeeze(tf.slice(obs_n_batch, [0, b, 0], [3,1,5]))
+        act_n_batch = np.array(actions_n_batch)
+        sum_dim = tf.reduce_sum(reward_n_batch, 0)
+        max_r = tf.argmax(sum_dim)
+        max_dim = self.sess.run(max_r)
+        obs_n = tf.squeeze(tf.slice(obs_n_batch, [0, max_dim, 0], [batch_size,1,self.obs_shape_n[0][0]]))
+        rew_n = tf.slice(reward_n_batch, [0, max_dim], [batch_size, 1])
+        act_n = tf.squeeze(tf.slice(act_n_batch, [0, max_dim, 0], [batch_size,1,(self.world.dim_p * 2 + 1)]))
         obs_n_slice = self.sess.run(obs_n)
         rew_n_slice = self.sess.run(rew_n)
         act_n_slice = self.sess.run(act_n)
@@ -82,7 +84,7 @@ class mtmadan_trainer(Agent_trainer):
         }
         return feed_dict
 
-    def update_params(self, obs_n_batch, reward_n_batch, actions_n_batch):
+    def update_params(self, obs_n_batch, reward_n_batch, actions_n_batch, batch_size):
         print("update params")
-        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch, actions_n_batch, self.GAMMA)
+        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch, actions_n_batch, batch_size, self.GAMMA)
         self.sess.run([self.train_a, self.train_c], feed_dict)
