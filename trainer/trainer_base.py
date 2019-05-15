@@ -18,5 +18,5 @@ class Agent_trainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def update_params(self, feed_dict):
+    def update_params(self, S, R, A):
         pass

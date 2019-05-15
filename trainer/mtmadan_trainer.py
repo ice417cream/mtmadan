@@ -1,5 +1,6 @@
 from trainer.trainer_base import Agent_trainer
 import tensorflow as tf
+import numpy as np
 
 class mtmadan_trainer(Agent_trainer):
     def __init__(self, env, world, sess,GAMMA=0.9):
@@ -55,21 +56,33 @@ class mtmadan_trainer(Agent_trainer):
         print("loading model")
 
     def action(self, s_n):
-        print("action")
+        # print("action")
         action_n = self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: s_n})
         return action_n
 
-    def compute_global_r(self, obs_n_batch, reward_n_batch,GAMMA):
+    def compute_global_r(self, obs_n_batch, reward_n_batch, actions_n_batch, GAMMA):
         print("compute_global_reward")
-        buffer_v_target = []
-        for r in reward_n_batch[::-1]:  # reverse buffer r倒序读取数据
-            v_s_ = r + GAMMA * v_s_
-            buffer_v_target.append(v_s_)  # 定义
-        feed_dict = {}
-
+        print(reward_n_batch)
+        reward_n_batch = np.array(reward_n_batch)
+        obs_n_batch = np.array(obs_n_batch)
+        test = tf.reduce_sum(reward_n_batch, 0)
+        a = self.sess.run(test)
+        max_r = tf.argmax(test)
+        b = self.sess.run(max_r)
+        obs_n = tf.squeeze(tf.slice(obs_n_batch, [0, b, 0], [3,1,6]))
+        rew_n = tf.slice(reward_n_batch, [0, b], [3,1])
+        act_n = tf.squeeze(tf.slice(obs_n_batch, [0, b, 0], [3,1,5]))
+        obs_n_slice = self.sess.run(obs_n)
+        rew_n_slice = self.sess.run(rew_n)
+        act_n_slice = self.sess.run(act_n)
+        feed_dict = {
+            self.stauts_n: obs_n_slice,
+            self.actions_n: act_n_slice,
+            self.v_target: rew_n_slice
+        }
         return feed_dict
 
-    def update_params(self, obs_n_batch, reward_n_batch):
+    def update_params(self, obs_n_batch, reward_n_batch, actions_n_batch):
         print("update params")
-        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch,self.GAMMA)
+        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch, actions_n_batch, self.GAMMA)
         self.sess.run([self.train_a, self.train_c], feed_dict)
