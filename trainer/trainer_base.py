@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 class Agent_trainer(metaclass=ABCMeta):
 
     @abstractmethod
-    def build_net(self,scope,N_A):
+    def build_net(self):
         pass
 
     @abstractmethod
@@ -14,9 +14,9 @@ class Agent_trainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def action(self,s):
+    def action(self, s):
         pass
 
     @abstractmethod
-    def update_params(self):
+    def update_params(self, feed_dict):
         pass
