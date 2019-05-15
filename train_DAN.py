@@ -87,7 +87,7 @@ if __name__ == "__main__":
             worker.trainer.load_model(load_path)
             graph = tf.get_default_graph
 
-        #worker.work(batch_size, TRAIN_STEP_MAX, 'train')
+        worker.work(batch_size, TRAIN_STEP_MAX, 'train')
 
 
 
