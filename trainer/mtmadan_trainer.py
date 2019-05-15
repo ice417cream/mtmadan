@@ -7,7 +7,7 @@ class mtmadan_trainer(Agent_trainer):
         self.world = world
         self.sess = sess
         self.env = env
-        #TODO ????
+
         self.obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
 
         self.stauts_n = tf.placeholder(tf.float32, [None, self.obs_shape_n[0][0]], 'stauts-input')
@@ -58,6 +58,13 @@ class mtmadan_trainer(Agent_trainer):
         action_n = self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: s_n})
         return action_n
 
-    def update_params(self, feed_dict):
+    def compute_global_r(self, obs_n_batch, reward_n_batch):
+        print("compute_global_reward")
+        feed_dict = {}
+
+        return feed_dict
+
+    def update_params(self,obs_n_batch, reward_n_batch):
         print("update params")
+        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch)
         self.sess.run([self.train_a, self.train_c], feed_dict)
