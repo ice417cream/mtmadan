@@ -1,7 +1,8 @@
 from trainer.trainer_base import Agent_trainer
+import numpy as np
 
 class Mtmadan_trainer(Agent_trainer):
-    def __init__(self, env, world, obs_shape_n, worker_count=1):
+    def __init__(self, env, world, worker_count=1):
         print("mtmadan trianer init")
 
     def train(self):
@@ -16,8 +17,9 @@ class Mtmadan_trainer(Agent_trainer):
     def load_model(self):
         print("loading model")
 
-    def action(self):
-        print("action")
+    def action(self,_stauts):
+        actions_n = np.random.rand(1000,5)
+        return actions_n
 
     def update_params(self):
         print("update params")

@@ -4,7 +4,8 @@ import tensorflow as tf
 import time
 import multiprocessing
 import threading
-import trainer.A3C_trainer as Trainer
+
+import trainer.mtmadan_trainer as Trainer
 
 
 
@@ -25,19 +26,32 @@ MAX_EP_STEP = 200
 UPDATE_GLOBAL_ITER = 10
 GAMMA = 0.9
 GLOBAL_RUNNING_R=[]
+batch_size = 25
+TRAIN_STEP = 1000
 
 class Worker():
-    def __init__(self):
+    def __init__(self,env,world,trainer='MADAN'):
         print("Worker_init")
+        self.trainer = Trainer.Mtmadan_trainer(env,world)
 
-    def act(self,dic,j):
+    def work(self,batch_size,TRAIN_STEP,type='display'):
+        print("work")
+        if  type=='display':
+            while True:
+                self.act(batch_size)
 
-        print("act",j)
 
 
-    def update(self,id,action,j):
+    def act(self,batch_size):
+        _status = env.reset()
+        batch_obs_n = []
+        for batch_step in range(batch_size):
+            actions_n = self.trainer.action(_status)
+            obs_n = env.step(actions_n)
+            print("act",batch_step)
+            env.render()
 
-        print("update", id)
+
 
 
 
@@ -67,34 +81,40 @@ if __name__=="__main__":
     # arglist = parse_args() TODO
 
     env, world= make_env("mtmadan_test")
-    obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
-    act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
 
-    stauts_n = tf.placeholder(tf.float32,[None,obs_shape_n[0][0]],'stauts-input')
-    actions_n = tf.placeholder(tf.float32,[None,world.dim_p*2-1],'actions-input')
+    worker = Worker(env,world)
 
-    w_init = tf.random_normal_initializer(0.,.1)
-    with tf.variable_scope('actor'):
-        l_a = tf.layers.dense(stauts_n,32,tf.nn.relu6,kernel_initializer=w_init,name='l_a')
-        mu = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.tanh,kernel_initializer=w_init,name='mu')
-        sigma = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.softplus,kernel_initializer=w_init,name='sigma')
-    _action_n = tf.distributions.Normal(mu,sigma).sample(1)
+    worker.work(batch_size,TRAIN_STEP,'display')
 
 
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        _data = env.reset()
-        for i in range(50):
-            data = {stauts_n: _data}
-            time_start_action = time.time()
-            action_n = sess.run(_action_n, feed_dict=data)
-            time_for_action = time.time() - time_start_action
-            new_obs_n, rew_n, done_n, info_n = env.step(action_n[0])
-            _data = new_obs_n
-            print('='*500)
-            print(time_for_action)
-            env.render()
-        print(action_n)
+    # obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
+    # act_shape_n = [env.action_space[i] for i in range(env.n)] #返回值是离散空间Discrete
+    #
+    # stauts_n = tf.placeholder(tf.float32,[None,obs_shape_n[0][0]],'stauts-input')
+    # actions_n = tf.placeholder(tf.float32,[None,world.dim_p*2-1],'actions-input')
+    #
+    # w_init = tf.random_normal_initializer(0.,.1)
+    # with tf.variable_scope('actor'):
+    #     l_a = tf.layers.dense(stauts_n,32,tf.nn.relu6,kernel_initializer=w_init,name='l_a')
+    #     mu = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.tanh,kernel_initializer=w_init,name='mu')
+    #     sigma = tf.layers.dense(l_a,world.dim_p*2+1,tf.nn.softplus,kernel_initializer=w_init,name='sigma')
+    # _action_n = tf.distributions.Normal(mu,sigma).sample(1)
+    #
+    #
+    # with tf.Session() as sess:
+    #     sess.run(tf.global_variables_initializer())
+    #     _data = env.reset()
+    #     for i in range(50):
+    #         data = {stauts_n: _data}
+    #         time_start_action = time.time()
+    #         action_n = sess.run(_action_n, feed_dict=data)
+    #         time_for_action = time.time() - time_start_action
+    #         new_obs_n, rew_n, done_n, info_n = env.step(action_n[0])
+    #         _data = new_obs_n
+    #         print('='*500)
+    #         print(time_for_action)
+    #         env.render()
+    #     print(action_n)
 
     # 测试动作的
     # action_nn=[]
