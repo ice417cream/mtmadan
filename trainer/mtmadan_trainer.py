@@ -1,18 +1,20 @@
 from trainer.trainer_base import Agent_trainer
 import tensorflow as tf
+import numpy as np
 
 class mtmadan_trainer(Agent_trainer):
-    def __init__(self, env, world, GAMMA, sess):
+    def __init__(self, env, world, sess,GAMMA=0.9):
         print("mtmadan trianer init")
         self.world = world
         self.sess = sess
         self.env = env
+
         self.obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
-        self.GAMMA = GAMMA
 
         self.stauts_n = tf.placeholder(tf.float32, [None, self.obs_shape_n[0][0]], 'stauts-input')
         self.actions_n = tf.placeholder(tf.float32, [None, self.world.dim_p * 2 + 1], 'actions-input')
         self.v_target = tf.placeholder(tf.float32, [None, 1], 'Vtarget')
+        self.GAMMA = GAMMA
 
         mu, sigma, self.v = self.build_net()
         td = tf.subtract(self.v_target, self.v, name='TD_error')
@@ -47,31 +49,42 @@ class mtmadan_trainer(Agent_trainer):
             v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')
         return mu, sigma, v
 
-    def save_model(self):
+    def save_model(self, path):
         print("saving model")
+        tf.train.Saver().save(self.sess, save_path=path)
 
-    def load_model(self):
+    def load_model(self, path):
         print("loading model")
+        tf.train.Saver().restore(self.sess, save_path=path)
 
     def action(self, s_n):
-        print("action")
+        # print("action")
         action_n = self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: s_n})
         return action_n
 
-    def compute_global_r(self, obs_n_batch, reward_n_batch):
+    def compute_global_r(self, obs_n_batch, reward_n_batch, actions_n_batch, batch_size, GAMMA):
         print("compute_global_reward")
-        v_s_ = self.sess.run(self.v, {self.stauts_n: obs_n_batch})
-        buffer_v_target = []
-        for r in reward_n_batch[::-1]:  # reverse buffer r
-            v_s_ = r + self.GAMMA * v_s_
-            buffer_v_target.append(v_s_)
-        buffer_v_target.reverse()
-        feed_dict = {self.stauts_n: obs_n_batch, }
-
+        print(reward_n_batch)
+        reward_n_batch = np.array(reward_n_batch)
+        obs_n_batch = np.array(obs_n_batch)
+        act_n_batch = np.array(actions_n_batch)
+        sum_dim = tf.reduce_sum(reward_n_batch, 0)
+        max_r = tf.argmax(sum_dim)
+        max_dim = self.sess.run(max_r)
+        obs_n = tf.squeeze(tf.slice(obs_n_batch, [0, max_dim, 0], [batch_size,1,self.obs_shape_n[0][0]]))
+        rew_n = tf.slice(reward_n_batch, [0, max_dim], [batch_size, 1])
+        act_n = tf.squeeze(tf.slice(act_n_batch, [0, max_dim, 0], [batch_size,1,(self.world.dim_p * 2 + 1)]))
+        obs_n_slice = self.sess.run(obs_n)
+        rew_n_slice = self.sess.run(rew_n)
+        act_n_slice = self.sess.run(act_n)
+        feed_dict = {
+            self.stauts_n: obs_n_slice,
+            self.actions_n: act_n_slice,
+            self.v_target: rew_n_slice
+        }
         return feed_dict
 
-    def update_params(self,obs_n_batch, reward_n_batch):
+    def update_params(self, obs_n_batch, reward_n_batch, actions_n_batch, batch_size):
         print("update params")
-        self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: obs_n_batch})
-        #feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch)
-        #self.sess.run([self.train_a, self.train_c], feed_dict)
+        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch, actions_n_batch, batch_size, self.GAMMA)
+        self.sess.run([self.train_a, self.train_c], feed_dict)
