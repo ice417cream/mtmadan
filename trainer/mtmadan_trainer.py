@@ -2,13 +2,13 @@ from trainer.trainer_base import Agent_trainer
 import tensorflow as tf
 
 class mtmadan_trainer(Agent_trainer):
-    def __init__(self, env, world, sess):
+    def __init__(self, env, world, GAMMA, sess):
         print("mtmadan trianer init")
         self.world = world
         self.sess = sess
         self.env = env
-
         self.obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
+        self.GAMMA = GAMMA
 
         self.stauts_n = tf.placeholder(tf.float32, [None, self.obs_shape_n[0][0]], 'stauts-input')
         self.actions_n = tf.placeholder(tf.float32, [None, self.world.dim_p * 2 + 1], 'actions-input')
@@ -60,11 +60,18 @@ class mtmadan_trainer(Agent_trainer):
 
     def compute_global_r(self, obs_n_batch, reward_n_batch):
         print("compute_global_reward")
-        feed_dict = {}
+        v_s_ = self.sess.run(self.v, {self.stauts_n: obs_n_batch})
+        buffer_v_target = []
+        for r in reward_n_batch[::-1]:  # reverse buffer r
+            v_s_ = r + self.GAMMA * v_s_
+            buffer_v_target.append(v_s_)
+        buffer_v_target.reverse()
+        feed_dict = {self.stauts_n: obs_n_batch, }
 
         return feed_dict
 
     def update_params(self,obs_n_batch, reward_n_batch):
         print("update params")
-        feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch)
-        self.sess.run([self.train_a, self.train_c], feed_dict)
+        self.sess.run(self._action_n.sample(1), feed_dict={self.stauts_n: obs_n_batch})
+        #feed_dict = self.compute_global_r(obs_n_batch, reward_n_batch)
+        #self.sess.run([self.train_a, self.train_c], feed_dict)

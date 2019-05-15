@@ -9,11 +9,12 @@ import threading
 #初始参数 TODO
 batch_size = 25
 TRAIN_STEP_MAX = 2000
+GAMMA = 0.9
 
 class Worker():
     def __init__(self,env, world, sess):
         print("Worker_init")
-        self.trainer = T.mtmadan_trainer(env, world, sess)
+        self.trainer = T.mtmadan_trainer(env, world, GAMMA, sess)
 
     def work(self,batch_size,TRAIN_STEP,type='display'):
         print("work")
@@ -42,7 +43,7 @@ class Worker():
         _status = env.reset()
         for batch_step in range(batch_size):
             actions_n = self.trainer.action(_status)
-            env.step(actions_n)
+            env.step(actions_n[0])
             print("act",batch_step)
             env.render()
 
@@ -67,10 +68,10 @@ if __name__ == "__main__":
     # arglist = parse_args() TODO
 
     env, world = make_env("mtmadan_test")
-
-    worker = Worker(env, world)
-
-    worker.work(batch_size, TRAIN_STEP_MAX, 'display')
+    with tf.Session() as sess:
+        worker = Worker(env, world, sess)
+        sess.run(tf.global_variables_initializer())
+        worker.work(batch_size, TRAIN_STEP_MAX, 'display')
 
 
 
