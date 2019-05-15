@@ -4,7 +4,6 @@
     <list default="true" id="b640b986-5b4d-46a6-a4b9-89e029dd97e2" name="Default Changelist" comment="添加trainers">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_DAN.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_DAN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trainer/mtmadan_trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/trainer/mtmadan_trainer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../multiagent-particle-envs/multiagent/environment.py" beforeDir="false" afterPath="$PROJECT_DIR$/../multiagent-particle-envs/multiagent/environment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../multiagent-particle-envs/multiagent/scenarios/simple.py" beforeDir="false" afterPath="$PROJECT_DIR$/../multiagent-particle-envs/multiagent/scenarios/simple.py" afterDir="false" />
     </list>
@@ -19,8 +18,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_DAN.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="501">
-              <caret line="51" column="24" lean-forward="true" selection-start-line="51" selection-start-column="24" selection-end-line="51" selection-end-column="24" />
+            <state relative-caret-position="437">
+              <caret line="43" column="26" lean-forward="true" selection-start-line="43" selection-start-column="26" selection-end-line="43" selection-end-column="26" />
               <folding>
                 <element signature="e#15#33#0" expanded="true" />
               </folding>
@@ -366,7 +365,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="60580000" />
+    <option name="totallyTimeSpent" value="61561000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
@@ -409,7 +408,7 @@
     <option name="LAST_COMMIT_MESSAGE" value="run成功" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/mtmadan$train_DAN.coverage" NAME="train_DAN Coverage Results" MODIFIED="1557900094737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/mtmadan$train_DAN.coverage" NAME="train_DAN Coverage Results" MODIFIED="1557900787866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/mtmadan_test.py" />
@@ -611,8 +610,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_DAN.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="501">
-          <caret line="51" column="24" lean-forward="true" selection-start-line="51" selection-start-column="24" selection-end-line="51" selection-end-column="24" />
+        <state relative-caret-position="437">
+          <caret line="43" column="26" lean-forward="true" selection-start-line="43" selection-start-column="26" selection-end-line="43" selection-end-column="26" />
           <folding>
             <element signature="e#15#33#0" expanded="true" />
           </folding>

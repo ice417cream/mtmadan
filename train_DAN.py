@@ -27,7 +27,7 @@ UPDATE_GLOBAL_ITER = 10
 GAMMA = 0.9
 GLOBAL_RUNNING_R=[]
 batch_size = 25
-TRAIN_STEP = 1000
+TRAIN_STEP_MAX = 1000
 
 class Worker():
     def __init__(self,env,world,trainer='MADAN'):
@@ -38,16 +38,21 @@ class Worker():
         print("work")
         if  type=='display':
             while True:
-                self.act(batch_size)
-
+                self.display(batch_size)
+        elif type =='train':
+            for TRAIN_STEP in range(TRAIN_STEP_MAX):
+                self.act()
 
 
     def act(self,batch_size):
+
+
+
+    def display(self,batch_size):
         _status = env.reset()
-        batch_obs_n = []
         for batch_step in range(batch_size):
             actions_n = self.trainer.action(_status)
-            obs_n = env.step(actions_n)
+            env.step(actions_n)
             print("act",batch_step)
             env.render()
 
