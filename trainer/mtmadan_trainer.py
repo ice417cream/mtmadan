@@ -2,12 +2,13 @@ from trainer.trainer_base import Agent_trainer
 import tensorflow as tf
 
 class mtmadan_trainer(Agent_trainer):
-    def __init__(self, env, world, obs_shape_n, sess):
+    def __init__(self, env, world, sess):
         print("mtmadan trianer init")
         self.world = world
-        self.obs_shape_n = obs_shape_n
         self.sess = sess
         self.env = env
+        #TODO ????
+        self.obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
 
         self.stauts_n = tf.placeholder(tf.float32, [None, self.obs_shape_n[0][0]], 'stauts-input')
         self.actions_n = tf.placeholder(tf.float32, [None, self.world.dim_p * 2 + 1], 'actions-input')
@@ -25,6 +26,8 @@ class mtmadan_trainer(Agent_trainer):
             log_prob = self._action_n.log_prob(self.actions_n)
             exp_v = log_prob * tf.stop_gradient(td)
             entropy = self._action_n.entropy()  # encourage exploration
+
+            #0.01为可调参数
             self.exp_v = 0.01 * entropy + exp_v
             self.a_loss = tf.reduce_mean(-self.exp_v)
 
