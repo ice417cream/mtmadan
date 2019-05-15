@@ -10,7 +10,7 @@ class Agent_trainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save_model(self, path):
+    def save_model(self, path, step):
         pass
 
     @abstractmethod

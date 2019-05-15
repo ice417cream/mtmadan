@@ -49,13 +49,15 @@ class mtmadan_trainer(Agent_trainer):
             v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')
         return mu, sigma, v
 
-    def save_model(self, path):
+    def save_model(self, path, step):
         print("saving model")
-        tf.train.Saver().save(self.sess, save_path=path)
+        tf.train.Saver().save(self.sess, save_path=path, global_step=step)
 
     def load_model(self, path):
         print("loading model")
-        tf.train.Saver().restore(self.sess, save_path=path)
+        load = tf.train.import_meta_graph(path + '.meta')
+        load.restore(self.sess, save_path=(path))
+        print("load done")
 
     def action(self, s_n):
         # print("action")

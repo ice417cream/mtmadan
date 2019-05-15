@@ -5,10 +5,14 @@ import time
 import multiprocessing
 import trainer.mtmadan_trainer as T
 import threading
+import os
 
 #初始参数 TODO
 batch_size = 3
 TRAIN_STEP_MAX = 2000
+save_path = "./save_model/model"
+load_path = "./save_model/model-4"
+load_model = False
 
 class Worker():
     def __init__(self,env, world, sess):
@@ -24,6 +28,10 @@ class Worker():
             for TRAIN_STEP in range(TRAIN_STEP_MAX):
                 obs_n_batch, reward_n_batch, actions_n_batch = self.act(batch_size)
                 self.trainer.update_params(obs_n_batch,reward_n_batch, actions_n_batch, batch_size)
+                if TRAIN_STEP % 1 == 0:
+                    if os.path.isdir(save_path) is False:
+                        os.makedirs(save_path)
+                    self.trainer.save_model(save_path, TRAIN_STEP)
 
 
     def act(self,batch_size):
@@ -73,10 +81,13 @@ if __name__ == "__main__":
     with tf.Session() as sess:
 
         worker = Worker(env, world, sess)
-
         sess.run(tf.global_variables_initializer())
 
-        worker.work(batch_size, TRAIN_STEP_MAX, 'train')
+        if load_model:
+            worker.trainer.load_model(load_path)
+            graph = tf.get_default_graph
+
+        #worker.work(batch_size, TRAIN_STEP_MAX, 'train')
 
 
 
