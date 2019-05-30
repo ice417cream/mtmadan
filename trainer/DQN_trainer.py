@@ -15,6 +15,7 @@ class DQN_trainer():
             batch_size = 50,
             e_greedy_increment = None,
             gamma = 0.9,
+            n_actions = 9
     ):
         print("DQN_trianer init")
         self.env = env
@@ -24,8 +25,8 @@ class DQN_trainer():
         self.lr = learning_rate
         self.memory_size = memory_size
         self.gamma = gamma
-        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 2))
-        self.n_actions = world.dim_p*4
+        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + world.dim_p * 2 + 2))
+        self.n_actions = n_actions
         self.epsilon_max = e_greedy
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
@@ -87,7 +88,7 @@ class DQN_trainer():
     def store_transition(self, s, a, r, s_):
         if not hasattr(self, 'memory_counter'):
             self.memory_counter = 0
-        transition = np.hstack((s, [a, r], s_))
+        transition = np.hstack((s, a, r, s_)) # 按行合并
         # replace the old memory with new memory
         index = self.memory_counter % self.memory_size
         self.memory[index, :] = transition

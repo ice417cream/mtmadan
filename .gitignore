@@ -1,1 +1,5 @@
 # Created by .ignore support plugin (hsz.mobi)
+.idea
+将删除 MAEnv/scenarios/__pycache__/trainer_1_test.cpython-35.pyc
+将删除 save_model/
+将删除 trainer/__pycache__/DQN_trainer.cpython-35.pyc
