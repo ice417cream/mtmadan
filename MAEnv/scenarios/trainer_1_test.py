@@ -13,7 +13,7 @@ class Scenario(BaseScenario):
             agent.silent = True
             agent.size = 0.025
         # add landmarks
-        world.landmarks = [Landmark() for i in range(2)]
+        world.landmarks = [Landmark() for i in range(1)]
         for i, landmark in enumerate(world.landmarks):
             landmark.name = 'landmark %d' % i
             landmark.collide = False
@@ -50,4 +50,4 @@ class Scenario(BaseScenario):
         entity_pos = []
         for entity in world.landmarks:
             entity_pos.append(entity.state.p_pos - agent.state.p_pos)
-        return np.concatenate([agent.state.p_vel] +[agent.state.p_pos]+ entity_pos[:-1])
+        return np.concatenate([agent.state.p_vel] +[agent.state.p_pos]+ entity_pos)

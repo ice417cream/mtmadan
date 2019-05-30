@@ -8,7 +8,7 @@ import threading
 import os
 
 #初始参数 TODO
-batch_size = 3
+batch_size = 50
 TRAIN_STEP_MAX = 2000
 save_path = "./save_model/model"
 load_path = "./save_model/model-4"
@@ -39,14 +39,17 @@ class Worker():
         obs_n_batch = []
         reward_n_batch = []
         actions_n_batch = []
+        obs_n_next_batch = []
         for batch_step in range(batch_size):
             actions_n = self.trainer.action(obs_n)
-            obs_n, reward_n, done_n, info_n = env.step(actions_n[0])
+            obs_n_next, reward_n, done_n, info_n = env.step(actions_n[0])
             obs_n_batch.append(obs_n)
             reward_n_batch.append(reward_n)
             actions_n_batch.append(actions_n[0])
-            print("act", batch_step)
-        return obs_n_batch, reward_n_batch, actions_n_batch
+            obs_n_next_batch.append(obs_n_next)
+            obs_n = obs_n_next
+            env.render()
+        return np.array(obs_n_batch), np.array(reward_n_batch), np.array(actions_n_batch),np.array(obs_n_next_batch)
 
     def display(self,batch_size):
         _status = env.reset()
