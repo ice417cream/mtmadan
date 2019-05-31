@@ -24,6 +24,7 @@ action_dict = {"0": [0., 0., 1., 1., 0.], # l u
                "6": [0., 0., 1., 0., 1.], # l d
                "7": [0., 0., 1., 0., 0.], # l
                "8": [1., 0., 0., 0., 0.]} #stop
+
 #creat the world
 def make_env(scenario_name):
 
@@ -43,10 +44,10 @@ def make_env(scenario_name):
 
 if __name__ == "__main__":
     # arglist = parse_args() TODO
-
+    act_num = len(action_dict)
     env, world = make_env("trainer_1_test")
 
-    trainer = T.DQN_trainer(env,world)
+    trainer = T.DQN_trainer(env,world, n_actions=act_num)
 
     step  = 0
 

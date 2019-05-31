@@ -15,7 +15,7 @@ class DQN_trainer():
             batch_size = 50,
             e_greedy_increment = None,
             gamma = 0.9,
-            n_actions = 9
+            n_actions = None
     ):
         print("DQN_trianer init")
         self.env = env

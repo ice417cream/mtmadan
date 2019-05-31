@@ -33,12 +33,12 @@ class Scenario(BaseScenario):
         world.landmarks[0].color = np.array([0.75,0.25,0.25])
         # set random initial states
         for agent in world.agents:
-            agent.state.p_pos = np.random.uniform(-0.9,-0.95, world.dim_p)
+            agent.state.p_pos = np.random.uniform(-1, 1, world.dim_p)
             agent.state.p_vel = np.zeros(world.dim_p)
             agent.state.c = np.zeros(world.dim_c)
             agent.size = 0.025
         for i, landmark in enumerate(world.landmarks):
-            landmark.state.p_pos = np.random.uniform(0.9,0.95, world.dim_p)
+            landmark.state.p_pos = np.random.uniform(-1, 1, world.dim_p)
             landmark.state.p_vel = np.zeros(world.dim_p)
 
     def reward(self, agent, world):
