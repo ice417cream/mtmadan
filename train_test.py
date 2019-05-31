@@ -14,7 +14,7 @@ episode_step_max = 100
 save_path = "./save_model/model"
 load_path = "./save_model/model-4"
 load_model = False
-agent_num = 10
+agent_num = 1000
 landmark_num = 1
 #[stop, right, left, up, down]
 action_dict = {"0": [0., 0., 1., 1., 0.], # l u
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     env, world = make_env("trainer_1_test")
 
-    trainer = T.DQN_trainer(env,world)
+    trainer = T.DQN_trainer(env,world, agent_num=agent_num)
 
     step  = 0
 
@@ -70,9 +70,8 @@ if __name__ == "__main__":
                                      action[agent_index],
                                      reward[agent_index],
                                      observation_[agent_index])  # 将当前观察,行为,奖励和下一个观察存储起来
-            if episode_step % 50 == 0:
-                trainer.learn()
             observation = observation_
+        trainer.learn()
         print(episode, " | game over")
         env.close()
 

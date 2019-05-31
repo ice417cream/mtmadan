@@ -15,7 +15,8 @@ class DQN_trainer():
             batch_size = 50,
             e_greedy_increment = None,
             gamma = 0.9,
-            n_actions = 9
+            n_actions = 9,
+            agent_num = 10, #default value
     ):
         print("DQN_trianer init")
         self.env = env
@@ -33,6 +34,7 @@ class DQN_trainer():
         self.replace_target_iter = replace_target_iter
         self.batch_size = batch_size
         self.n_features = self.obs_shape_n[0][0]
+        self.agent_num = agent_num
 
 
         self.learn_step_counter = 0
@@ -103,7 +105,7 @@ class DQN_trainer():
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
             action = np.argmax(actions_value, axis=1)
         else:
-            action = np.random.randint(0, self.n_actions, [10, 1])
+            action = np.random.randint(0, self.n_actions, [self.agent_num, 1])
         return list(action)
 
     def learn(self):
