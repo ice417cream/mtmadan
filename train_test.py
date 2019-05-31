@@ -14,7 +14,7 @@ episode_step_max = 100
 save_path = "./save_model/model"
 load_path = "./save_model/model-4"
 load_model = False
-agent_num = 1000
+agent_num = 100
 landmark_num = 1
 #[stop, right, left, up, down]
 action_dict = {"0": [0., 0., 1., 1., 0.], # l u
@@ -54,6 +54,11 @@ if __name__ == "__main__":
 
     for episode in range(TRAIN_STEP_MAX):
         observation = env.reset()
+        start = time.time()
+        # reward_start = []
+        # reward_end = []
+        # diff_rew = []
+        # reward_buffer = []
         agent_index = np.random.randint(0, agent_num)
         for episode_step in range(episode_step_max):
             env.render()
@@ -63,16 +68,22 @@ if __name__ == "__main__":
             for act in action:
                 action_env.append(action_dict[str(int(act))])
             observation_, reward, done, info = env.step(action_env)
+            # if episode_step == 0:
+            #     reward_start = reward
+            # elif episode_step == episode_step_max - 1:
+            #     reward_end = reward
             action = np.reshape(action, [agent_num, 1])
             reward = np.reshape(reward, [agent_num, 1])
-
             trainer.store_transition(observation[agent_index],
                                      action[agent_index],
                                      reward[agent_index],
                                      observation_[agent_index])  # 将当前观察,行为,奖励和下一个观察存储起来
             observation = observation_
+        # diff_rew = reward_start - reward_end
+        # agent_index = np.argmax(diff_rew)
         trainer.learn()
-        print(episode, " | game over")
+        end = time.time()
+        print("Train_Step:", episode)
         env.close()
 
 
