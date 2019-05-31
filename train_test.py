@@ -14,6 +14,8 @@ episode_step_max = 100
 save_path = "./save_model/model"
 load_path = "./save_model/model-4"
 load_model = False
+agent_num = 10
+landmark_num = 1
 #[stop, right, left, up, down]
 action_dict = {"0": [0., 0., 1., 1., 0.], # l u
                "1": [0., 0., 0., 1., 0.], #   u
@@ -34,7 +36,7 @@ def make_env(scenario_name):
 
     scenario = scenarios.load(scenario_name+".py").Scenario()#建立一个类
 
-    world = scenario.make_world()
+    world = scenario.make_World(agent_num, landmark_num)
 
     env = MultiAgentEnv(world,scenario.reset_world,scenario.reward,scenario.observation)
 
@@ -52,14 +54,22 @@ if __name__ == "__main__":
 
     for episode in range(TRAIN_STEP_MAX):
         observation = env.reset()
+        agent_index = np.random.randint(0, agent_num)
         for episode_step in range(episode_step_max):
             env.render()
-            #time.sleep(0.5)
+            #time.sleep(0.01)
+            action_env = []
             action = trainer.choose_action(observation)
-            action_env = np.reshape(np.array(action_dict[str(action)]), [1,5])
+            for act in action:
+                action_env.append(action_dict[str(int(act))])
             observation_, reward, done, info = env.step(action_env)
-            action = np.array([[action]])
-            trainer.store_transition(observation, action, reward, observation_)  # 将当前观察,行为,奖励和下一个观察存储起来
+            action = np.reshape(action, [agent_num, 1])
+            reward = np.reshape(reward, [agent_num, 1])
+
+            trainer.store_transition(observation[agent_index],
+                                     action[agent_index],
+                                     reward[agent_index],
+                                     observation_[agent_index])  # 将当前观察,行为,奖励和下一个观察存储起来
             if episode_step % 50 == 0:
                 trainer.learn()
             observation = observation_

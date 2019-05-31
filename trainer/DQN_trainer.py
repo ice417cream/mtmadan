@@ -25,8 +25,8 @@ class DQN_trainer():
         self.lr = learning_rate
         self.memory_size = memory_size
         self.gamma = gamma
-        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 1 + 1)) #1 + 1 -> act + reward
         self.n_actions = n_actions
+        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 1 + 1)) #1 + 1 -> act + reward
         self.epsilon_max = e_greedy
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
@@ -101,10 +101,10 @@ class DQN_trainer():
         if np.random.uniform() < self.epsilon:
             # forward feed the observation and get q value for every actions
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
-            action = np.argmax(actions_value)
+            action = np.argmax(actions_value, axis=1)
         else:
-            action = np.random.randint(0, self.n_actions)
-        return action
+            action = np.random.randint(0, self.n_actions, [10, 1])
+        return list(action)
 
     def learn(self):
         # check to replace target parameters
