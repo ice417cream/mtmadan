@@ -100,7 +100,7 @@ class MultiAgentEnv(gym.Env):
         if self.shared_reward:
             reward_n = [reward] * self.n
 
-        return np.array(obs_n), reward_n, done_n, info_n
+        return np.array(obs_n), np.array([reward_n]), done_n, info_n
 
     def reset(self):
         # reset world

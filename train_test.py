@@ -10,6 +10,7 @@ import os
 #初始参数 TODO
 batch_size = 50
 TRAIN_STEP_MAX = 2000
+episode_step_max = 100
 save_path = "./save_model/model"
 load_path = "./save_model/model-4"
 load_model = False
@@ -49,21 +50,19 @@ if __name__ == "__main__":
 
     step  = 0
 
-    for episode in range(300):
+    for episode in range(TRAIN_STEP_MAX):
         observation = env.reset()
-        while True:
+        for episode_step in range(episode_step_max):
             env.render()
-            time.sleep(0.5)
+            #time.sleep(0.5)
             action = trainer.choose_action(observation)
             action_env = np.reshape(np.array(action_dict[str(action)]), [1,5])
             observation_, reward, done, info = env.step(action_env)
-            trainer.store_transition(observation, action_env, [reward], observation_)  # 将当前观察,行为,奖励和下一个观察存储起来
-            if(step > 200) and (step % 5 == 0):
+            action = np.array([[action]])
+            trainer.store_transition(observation, action, reward, observation_)  # 将当前观察,行为,奖励和下一个观察存储起来
+            if episode_step % 50 == 0:
                 trainer.learn()
             observation = observation_
-            if done[0]:
-                break
-            step += 1
         print(episode, " | game over")
         env.close()
 

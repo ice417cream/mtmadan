@@ -25,7 +25,7 @@ class DQN_trainer():
         self.lr = learning_rate
         self.memory_size = memory_size
         self.gamma = gamma
-        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + world.dim_p * 2 + 2))
+        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 1 + 1)) #1 + 1 -> act + reward
         self.n_actions = n_actions
         self.epsilon_max = e_greedy
         self.epsilon_increment = e_greedy_increment
