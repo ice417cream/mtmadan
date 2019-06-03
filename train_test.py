@@ -40,7 +40,7 @@ def parse_args():
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=False)
     parser.add_argument("--display", action="store_true", default=False)
-    parser.add_argument("--train", action="store_false", default=True)
+    parser.add_argument("--train_off", action="store_false", default=True)
 
     return parser.parse_args()
 
