@@ -1,44 +1,30 @@
 import tensorflow as tf
 import numpy as np
-import gym
+import os
 
 
 class DQN_trainer():
-    def __init__(
-            self,
-            env,
-            world,
-            learning_rate = 0.01,
-            memory_size = 1000,
-            e_greedy=0.9,
-            replace_target_iter=300,
-            batch_size = 50,
-            e_greedy_increment = None,
-            gamma = 0.9,
-            n_actions = 9,
-            agent_num = 10, #default value
-            load_path = None
-    ):
+    def __init__(self,
+                env,
+                world,
+                arglist,
+                memory_size = 1000,
+                e_greedy=0.9,
+                e_greedy_increment = None,
+                n_actions = 9):
         print("DQN_trianer init")
         self.env = env
         self.world = world
+        self.arglist = arglist
         self.obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
-        self.actions_n = [world.dim_p*2+1 for i in range(env.n)]
-        self.lr = learning_rate
+        self.actions_n = [world.dim_p * 2 + 1 for i in range(env.n)]
         self.memory_size = memory_size
-        self.gamma = gamma
         self.n_actions = n_actions
-        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 1 + 1)) #1 + 1 -> act + reward
+        self.memory = np.zeros((self.memory_size, self.obs_shape_n[0][0] * 2 + 1 + 1))  # 1 + 1 -> act + reward
         self.epsilon_max = e_greedy
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
-        self.replace_target_iter = replace_target_iter
-        self.batch_size = batch_size
         self.n_features = self.obs_shape_n[0][0]
-        self.agent_num = agent_num
-        self.load_path = load_path
-
-
         self.learn_step_counter = 0
 
         self.build_net()
@@ -53,14 +39,14 @@ class DQN_trainer():
         self.sess.run(tf.global_variables_initializer())
         self.cost_his = []
         self.saver = tf.train.Saver(max_to_keep=2)
-        if self.load_path != None:
-            self.load_model(self.load_path)
+        if self.arglist.load_dir != "":
+            self.load_model(self.arglist.load_dir)
 
 
     def build_net(self):
         print("building net")
-        self.s = tf.placeholder(tf.float32,[None,self.n_features],name='s')
-        self.s_= tf.placeholder(tf.float32,[None,self.n_features],name='s_')
+        self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')
+        self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')
         self.r = tf.placeholder(tf.float32, [None, ], name='r')  # input Reward
         self.a = tf.placeholder(tf.int32, [None, ], name='a')  # input Action
 
@@ -77,25 +63,25 @@ class DQN_trainer():
         with tf.variable_scope('target_net'):
             t1 = tf.layers.dense(self.s_, 20, tf.nn.relu, kernel_initializer=w_initializer,
                                  bias_initializer=b_initializer, name='t1')
-            self.q_next = tf.layers.dense(t1,self.n_actions, kernel_initializer=w_initializer,
+            self.q_next = tf.layers.dense(t1, self.n_actions, kernel_initializer=w_initializer,
                                           bias_initializer=b_initializer, name='t2')
 
         # ------------------net update ------------------
         with tf.variable_scope('q_target'):
-            q_target = self.r + self.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')    # shape=(None, )
+            q_target = self.r + self.arglist.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')# shape=(None, )
             self.q_target = tf.stop_gradient(q_target)
         with tf.variable_scope('q_eval'):
             a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
-            self.q_eval_wrt_a = tf.gather_nd(params=self.q_eval, indices=a_indices)    # shape=(None, )
+            self.q_eval_wrt_a = tf.gather_nd(params=self.q_eval, indices=a_indices)  # shape=(None, )
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval_wrt_a, name='TD_error'))
         with tf.variable_scope('train'):
-            self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
+            self._train_op = tf.train.RMSPropOptimizer(self.arglist.lr).minimize(self.loss)
 
     def store_transition(self, s, a, r, s_):
         if not hasattr(self, 'memory_counter'):
             self.memory_counter = 0
-        transition = np.hstack((s, a, r, s_)) # 按行合并
+        transition = np.hstack((s, a, r, s_))  # 按行合并
         # replace the old memory with new memory
         index = self.memory_counter % self.memory_size
         self.memory[index, :] = transition
@@ -110,20 +96,20 @@ class DQN_trainer():
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
             action = np.argmax(actions_value, axis=1)
         else:
-            action = np.random.randint(0, self.n_actions, [self.agent_num, 1])
+            action = np.random.randint(0, self.n_actions, [self.arglist.agent_num, 1])
         return list(action)
 
     def learn(self):
         # check to replace target parameters
-        if self.learn_step_counter % self.replace_target_iter == 0:
+        if self.learn_step_counter % self.arglist.replace_target_iter == 0:
             self.sess.run(self.target_replace_op)
             print('\ntarget_params_replaced\n')
 
         # sample batch memory from all memory
         if self.memory_counter > self.memory_size:
-            sample_index = np.random.choice(self.memory_size, size=self.batch_size)
+            sample_index = np.random.choice(self.memory_size, size=self.arglist.batch_size)
         else:
-            sample_index = np.random.choice(self.memory_counter, size=self.batch_size)
+            sample_index = np.random.choice(self.memory_counter, size=self.arglist.batch_size)
         batch_memory = self.memory[sample_index, :]
 
         _, cost = self.sess.run(
@@ -142,9 +128,11 @@ class DQN_trainer():
         self.learn_step_counter += 1
 
     def save_model(self, path, step):
+        if os.path.isdir(path) is False:
+            os.makedirs(path)
         self.saver.save(self.sess, save_path=path, global_step=step)
 
     def load_model(self, path):
         print("loading model")
         load = tf.train.latest_checkpoint(path)
-        self.saver.restore(self.sess,load)
+        self.saver.restore(self.sess, load)
