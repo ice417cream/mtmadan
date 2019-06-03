@@ -40,7 +40,7 @@ def parse_args():
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=False)
     parser.add_argument("--display", action="store_true", default=False)
-    parser.add_argument("--train_off", action="store_false", default=True)
+    parser.add_argument("--train", action="store_false", default=True)
 
     return parser.parse_args()
 
@@ -48,14 +48,11 @@ def parse_args():
 def make_env(arglist):
 
     print("make_env")
-
     from MAEnv.environment import MultiAgentEnv
     import MAEnv.scenarios as scenarios
 
     scenario = scenarios.load(arglist.scenario+".py").Scenario()#建立一个类
-
     world = scenario.make_World(arglist.agent_num, arglist.landmark_num)
-
     env = MultiAgentEnv(world,scenario.reset_world,scenario.reward,scenario.observation)
 
     return env,world

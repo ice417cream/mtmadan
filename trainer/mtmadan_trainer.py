@@ -1,8 +1,7 @@
-from trainer.trainer_base import Agent_trainer
 import tensorflow as tf
 import numpy as np
 
-class mtmadan_trainer(Agent_trainer):
+class mtmadan_trainer():
     def __init__(self, env, world, sess,GAMMA=0.9):
         print("mtmadan trianer init")
         self.world = world
