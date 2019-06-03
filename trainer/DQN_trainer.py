@@ -17,6 +17,7 @@ class DQN_trainer():
             gamma = 0.9,
             n_actions = 9,
             agent_num = 10, #default value
+            load_path = None
     ):
         print("DQN_trianer init")
         self.env = env
@@ -35,6 +36,7 @@ class DQN_trainer():
         self.batch_size = batch_size
         self.n_features = self.obs_shape_n[0][0]
         self.agent_num = agent_num
+        self.load_path = load_path
 
 
         self.learn_step_counter = 0
@@ -50,6 +52,9 @@ class DQN_trainer():
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
         self.cost_his = []
+        self.saver = tf.train.Saver(max_to_keep=2)
+        if self.load_path != None:
+            self.load_model(self.load_path)
 
 
     def build_net(self):
@@ -137,10 +142,9 @@ class DQN_trainer():
         self.learn_step_counter += 1
 
     def save_model(self, path, step):
-        tf.train.Saver().save(self.sess, save_path=path, global_step=step)
+        self.saver.save(self.sess, save_path=path, global_step=step)
 
     def load_model(self, path):
         print("loading model")
-        load = tf.train.import_meta_graph(path + '.meta')
-        load.restore(self.sess, save_path=(path))
-        print("load done")
+        load = tf.train.latest_checkpoint(path)
+        self.saver.restore(self.sess,load)

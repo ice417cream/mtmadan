@@ -12,10 +12,11 @@ batch_size = 50
 TRAIN_STEP_MAX = 2000
 episode_step_max = 100
 save_path = "./save_model/model"
-load_path = "./save_model/model-4"
+load_path = "./save_model/"
 load_model = False
-agent_num = 100
+agent_num = 1
 landmark_num = 1
+model = 'display'
 #[stop, right, left, up, down]
 action_dict = {"0": [0., 0., 1., 1., 0.], # l u
                "1": [0., 0., 0., 1., 0.], #   u
@@ -48,42 +49,60 @@ if __name__ == "__main__":
 
     env, world = make_env("trainer_1_test")
 
-    trainer = T.DQN_trainer(env,world, agent_num=agent_num)
+    trainer = T.DQN_trainer(env,world, agent_num=agent_num, load_path=load_path)
 
     step  = 0
 
-    for episode in range(TRAIN_STEP_MAX):
-        observation = env.reset()
-        start = time.time()
+    if model == 'train':
+        for episode in range(TRAIN_STEP_MAX):
+            observation = env.reset()
+            start = time.time()
 
-        agent_index = np.random.randint(0, agent_num)
-        for episode_step in range(episode_step_max):
-            env.render()
-            #time.sleep(0.01)
-            action_env = []
-            action = trainer.choose_action(observation)
-            for act in action:
-                action_env.append(action_dict[str(int(act))])
-            observation_, reward, done, info = env.step(action_env)
-            # if episode_step == 0:
-            #     reward_start = reward
-            # elif episode_step == episode_step_max - 1:
-            #     reward_end = reward
-            action = np.reshape(action, [agent_num, 1])
-            reward = np.reshape(reward, [agent_num, 1])
-            trainer.store_transition(observation[agent_index],
-                                     action[agent_index],
-                                     reward[agent_index],
-                                     observation_[agent_index])  # 将当前观察,行为,奖励和下一个观察存储起来
-            observation = observation_
-        # diff_rew = reward_start - reward_end
-        # agent_index = np.argmax(diff_rew)
-        trainer.learn()
-        end = time.time()
-        # if episode % 100 == 0:
-        #     trainer.save_model(save_path, episode)
-        print("Train_Step:", episode)
-        env.close()
+            agent_index = np.random.randint(0, agent_num)
+            for episode_step in range(episode_step_max):
+                # env.render()
+                #time.sleep(0.01)
+                action_env = []
+                action = trainer.choose_action(observation)
+                for act in action:
+                    action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
+                observation_, reward, done, info = env.step(action_env)
+                # if episode_step == 0:
+                #     reward_start = reward
+                # elif episode_step == episode_step_max - 1:
+                #     reward_end = reward
+                action = np.reshape(action, [agent_num, 1])
+                reward = np.reshape(reward, [agent_num, 1])
+                trainer.store_transition(observation[agent_index],
+                                         action[agent_index],
+                                         reward[agent_index],
+                                         observation_[agent_index])  # 将当前观察,行为,奖励和下一个观察存储起来
+                observation = observation_
+            # diff_rew = reward_start - reward_end
+            # agent_index = np.argmax(diff_rew)
+            trainer.learn()
+            end = time.time()
+            if episode % 100 == 0:
+                trainer.save_model(save_path, episode)
+            print("Train_Step:", episode)
+            print("cost:", trainer.cost_his[-1])
+            # env.close()
+
+    if model == 'display':
+        while True:
+            observation = env.reset()
+            for i in range(50):
+                start = time.time()
+                action_env = []
+                action = trainer.choose_action(observation)
+                for act in action:
+                    action_env.append(action_dict[str(int(act))])  # 定义动作，采用字典的方式
+                observation_, reward, done, info = env.step(action_env)
+                observation = observation_
+                env.render()
+                time.sleep(0.03)
+
+
 
 
 
