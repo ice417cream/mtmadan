@@ -55,10 +55,7 @@ if __name__ == "__main__":
     for episode in range(TRAIN_STEP_MAX):
         observation = env.reset()
         start = time.time()
-        # reward_start = []
-        # reward_end = []
-        # diff_rew = []
-        # reward_buffer = []
+
         agent_index = np.random.randint(0, agent_num)
         for episode_step in range(episode_step_max):
             env.render()
@@ -83,6 +80,8 @@ if __name__ == "__main__":
         # agent_index = np.argmax(diff_rew)
         trainer.learn()
         end = time.time()
+        # if episode % 100 == 0:
+        #     trainer.save_model(save_path, episode)
         print("Train_Step:", episode)
         env.close()
 

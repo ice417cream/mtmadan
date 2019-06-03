@@ -135,3 +135,12 @@ class DQN_trainer():
         # increasing epsilon
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
+
+    def save_model(self, path, step):
+        tf.train.Saver().save(self.sess, save_path=path, global_step=step)
+
+    def load_model(self, path):
+        print("loading model")
+        load = tf.train.import_meta_graph(path + '.meta')
+        load.restore(self.sess, save_path=(path))
+        print("load done")
