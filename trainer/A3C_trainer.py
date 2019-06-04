@@ -6,14 +6,13 @@ class ACNet(object):
     def __init__(self, scope, env, OPT_A, OPT_C, SESS, globalAC=None):
         self.env = env
         obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
-        act_shape_n = [env.action_space[i] for i in range(env.n)]  # 返回值是离散空间Discrete
         N_S = obs_shape_n[0][0]
         self.N_A = 8
         A_BOUND = [0,8]
-
+        GLOBAL_NET_SCOPE = 'Global_Net'
         self.SESS = SESS
 
-        if scope == "Global_net":   # get global network
+        if scope == GLOBAL_NET_SCOPE:   # get global network
             with tf.variable_scope(scope):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
                 self.a_params, self.c_params = self._build_net(scope)[-2:]
@@ -82,5 +81,4 @@ class ACNet(object):
 
     #选择动作
     def choose_action(self, s):  # run by a local
-        s = s[np.newaxis, :]
         return self.SESS.run(self.A, {self.s: s})

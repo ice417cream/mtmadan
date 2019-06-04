@@ -1,6 +1,10 @@
 #lewis @bit
 import numpy as np
 import time
+import os
+import shutil
+import matplotlib.pyplot as plt
+import threading
 import tensorflow as tf
 import trainer.A3C_trainer as T
 
@@ -17,7 +21,7 @@ LR_A = 0.0001    # learning rate for actor
 LR_C = 0.001    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
-agent_num = 10
+agent_num = 1000
 landmark_num = 1
 
 #[stop, right, left, up, down]
@@ -48,7 +52,7 @@ class Worker(object):
     def __init__(self, name, env, globalAC):
         self.env = env
         self.name = name
-        self.AC = T.ACNet(name, globalAC, OPT_A, OPT_C, SESS)
+        self.AC = T.ACNet(name, env, OPT_A, OPT_C, SESS, globalAC=globalAC)
 
     def work(self):
         global GLOBAL_RUNNING_R, GLOBAL_EP
@@ -58,12 +62,8 @@ class Worker(object):
             s = self.env.reset()
             ep_r = 0
             for ep_t in range(MAX_EP_STEP):
-                start = time.time()
                 a = self.AC.choose_action(s)
-                end = time.time()
-                #print("time:", end-start)
                 s_, r, done, info = self.env.step(a)
-                #print("s_ shape is %d" % s_.shape[0])
                 done = True if ep_t == MAX_EP_STEP - 1 else False
 
                 ep_r += r
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         # Create worker
         for i in range(N_WORKERS):
             i_name = 'W_%i' % i   # worker name
-            workers.append(Worker(i_name, env, GLOBAL_NET_SCOPE))
+            workers.append(Worker(i_name, env, GLOBAL_AC))
 
     #加入线程协调器
     COORD = tf.train.Coordinator()
