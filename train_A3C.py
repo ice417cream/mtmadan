@@ -10,18 +10,18 @@ import trainer.A3C_trainer as T
 
 OUTPUT_GRAPH = True
 LOG_DIR = './log'
-N_WORKERS = 4
-MAX_EP_STEP = 2000
-MAX_GLOBAL_EP = 20000
+N_WORKERS = os.cpu_count()
+MAX_EP_STEP = 200
+MAX_GLOBAL_EP = 5000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 10
+UPDATE_GLOBAL_ITER = 15
 GAMMA = 0.9
 ENTROPY_BETA = 0.01
 LR_A = 0.0001    # learning rate for actor
 LR_C = 0.001    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
-agent_num = 1000
+agent_num = 10
 landmark_num = 1
 
 #[stop, right, left, up, down]
@@ -62,8 +62,11 @@ class Worker(object):
             s = self.env.reset()
             ep_r = 0
             for ep_t in range(MAX_EP_STEP):
+                action_env = []
                 a = self.AC.choose_action(s)
-                s_, r, done, info = self.env.step(a)
+                for act in a:
+                    action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
+                s_, r, done, info = self.env.step(action_env)
                 done = True if ep_t == MAX_EP_STEP - 1 else False
 
                 ep_r += r
@@ -75,7 +78,7 @@ class Worker(object):
                     if done:
                         v_s_ = 0   # terminal
                     else:
-                        v_s_ = SESS.run(self.AC.v, {self.AC.s: s_[np.newaxis, :]})[0, 0]
+                        v_s_ = SESS.run(self.AC.v, {self.AC.s: s_})[0, 0]
                     buffer_v_target = []
                     for r in buffer_r[::-1]:    # reverse buffer r
                         v_s_ = r + GAMMA * v_s_
@@ -88,10 +91,10 @@ class Worker(object):
                         self.AC.a_his: buffer_a,
                         self.AC.v_target: buffer_v_target,
                     }
-                    print(ep_t, " | c_loss", SESS.run(self.AC.c_loss, feed_dict=feed_dict))
+                    #print(ep_t, " | a_loss", SESS.run(self.AC.a_loss, feed_dict=feed_dict))
                     self.AC.update_global(feed_dict)
                     buffer_s, buffer_a, buffer_r = [], [], []
-                   # self.AC.pull_global()
+                    self.AC.pull_global()
 
                 s = s_
                 total_step += 1
@@ -100,15 +103,25 @@ class Worker(object):
                         GLOBAL_RUNNING_R.append(ep_r)
                     else:
                         GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
-                    # print(
-                    #     self.name,
-                    #     "Ep:", GLOBAL_EP,
-                    #     "| Ep_r: %i" % GLOBAL_RUNNING_R[-1],
-                    #     "golbal_len %d" % len(GLOBAL_RUNNING_R)
-                    #       )
+                    print(self.name,
+                        " | Ep:", GLOBAL_EP,
+                        " | Ep_r:", GLOBAL_RUNNING_R[-1],
+                        " | golbal_len:", len(GLOBAL_RUNNING_R))
                     GLOBAL_EP += 1
                     break
 
+    def display(self):
+            for i in range (10):
+                observation = env.reset()
+                for i in range(50):
+                    action_env = []
+                    action = self.AC.choose_action(observation)
+                    for act in action:
+                        action_env.append(action_dict[str(int(act))])  # 定义动作，采用字典的方式
+                    observation_, reward, done, info = env.step(action_env)
+                    observation = observation_
+                    env.render()
+                    time.sleep(0.03)
 
 if __name__ == "__main__":
 
@@ -124,6 +137,7 @@ if __name__ == "__main__":
         for i in range(N_WORKERS):
             i_name = 'W_%i' % i   # worker name
             workers.append(Worker(i_name, env, GLOBAL_AC))
+        worker_d = Worker("display", env, GLOBAL_AC)
 
     #加入线程协调器
     COORD = tf.train.Coordinator()
@@ -145,8 +159,9 @@ if __name__ == "__main__":
         t.start()
         worker_threads.append(t)
     COORD.join(worker_threads)
+    worker_d.display()
 
-    plt.plot(np.arange(len(GLOBAL_RUNNING_R)), GLOBAL_RUNNING_R)
-    plt.xlabel('step')
-    plt.ylabel('Total moving reward')
-    plt.show()
+    # plt.plot(np.arange(len(GLOBAL_RUNNING_R)), GLOBAL_RUNNING_R)
+    # plt.xlabel('step')
+    # plt.ylabel('Total moving reward')
+    # plt.show()
