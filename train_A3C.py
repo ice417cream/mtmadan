@@ -114,6 +114,7 @@ if __name__ == "__main__":
 
     SESS = tf.Session()
     env, world = make_env("trainer_1_test")
+
     with tf.device("/cpu:0"):
         OPT_A = tf.train.RMSPropOptimizer(LR_A, name='RMSPropA')
         OPT_C = tf.train.RMSPropOptimizer(LR_C, name='RMSPropC')
