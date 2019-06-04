@@ -35,7 +35,7 @@ def parse_args():
     # Checkpointing
     parser.add_argument("--save-dir", type=str, default="./save_model/model", help="directory in which training state and model should be saved")
     parser.add_argument("--save-rate", type=int, default=100, help="save model once every time this many episodes are completed")
-    parser.add_argument("--load-dir", type=str, default="/save_model/", help="directory in which training state and model are loaded")
+    parser.add_argument("--load-dir", type=str, default="./save_model/", help="directory in which training state and model are loaded")
 
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=False)
