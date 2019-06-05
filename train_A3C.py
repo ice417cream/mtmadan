@@ -21,7 +21,7 @@ LR_A = 0.0001    # learning rate for actor
 LR_C = 0.001    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
-agent_num = 10
+agent_num = 1
 landmark_num = 1
 
 #[stop, right, left, up, down]
