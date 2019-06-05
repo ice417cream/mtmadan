@@ -11,18 +11,19 @@ import trainer.A3C_trainer as T
 OUTPUT_GRAPH = True
 LOG_DIR = './log'
 N_WORKERS = os.cpu_count()
-MAX_EP_STEP = 200
-MAX_GLOBAL_EP = 5000
+MAX_EP_STEP = 5
+MAX_GLOBAL_EP = 2000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 15
+UPDATE_GLOBAL_ITER = 5
 GAMMA = 0.9
 ENTROPY_BETA = 0.01
-LR_A = 0.0001    # learning rate for actor
-LR_C = 0.001    # learning rate for critic
+LR_A = 0.01    # learning rate for actor
+LR_C = 0.01    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
 agent_num = 1
 landmark_num = 1
+path = "./save_model/model"
 
 #[stop, right, left, up, down]
 action_dict = {"0": [0., 0., 1., 1., 0.], # l u
@@ -57,10 +58,11 @@ class Worker(object):
     def work(self):
         global GLOBAL_RUNNING_R, GLOBAL_EP
         total_step = 1
-        buffer_s, buffer_a, buffer_r = [], [], []
+        buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
         while not COORD.should_stop() and GLOBAL_EP < MAX_GLOBAL_EP:
             s = self.env.reset()
             ep_r = 0
+            agent_index = np.random.randint(0, agent_num)
             for ep_t in range(MAX_EP_STEP):
                 action_env = []
                 a = self.AC.choose_action(s)
@@ -70,32 +72,33 @@ class Worker(object):
                 done = True if ep_t == MAX_EP_STEP - 1 else False
 
                 ep_r += r
-                buffer_s.append(s)
-                buffer_a.append(a)
-                buffer_r.append((r+8)/8)  # normalize
-
+                buffer_s.append(s[agent_index, :])
+                buffer_a.append(a[agent_index])
+                buffer_r.append(r[0, agent_index])  # normalize
+                buffer_s_.append(s_[agent_index, :])
                 if total_step % UPDATE_GLOBAL_ITER == 0 or done:   # update global and assign to local net
                     if done:
                         v_s_ = 0   # terminal
                     else:
                         v_s_ = SESS.run(self.AC.v, {self.AC.s: s_})[0, 0]
+
                     buffer_v_target = []
-                    for r in buffer_r[::-1]:    # reverse buffer r
+                    for r in buffer_r[::-1]:  # reverse buffer r
                         v_s_ = r + GAMMA * v_s_
                         buffer_v_target.append(v_s_)
                     buffer_v_target.reverse()
-
                     buffer_s, buffer_a, buffer_v_target = np.vstack(buffer_s), np.vstack(buffer_a), np.vstack(buffer_v_target)
+
                     feed_dict = {
                         self.AC.s: buffer_s,
-                        self.AC.a_his: buffer_a,
-                        self.AC.v_target: buffer_v_target,
+                        self.AC.a_his: np.array(buffer_a),
+                        self.AC.v_target: np.array(buffer_v_target),
                     }
-                    #print(ep_t, " | a_loss", SESS.run(self.AC.a_loss, feed_dict=feed_dict))
+                    print(ep_t, " | a c loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
                     self.AC.update_global(feed_dict)
-                    buffer_s, buffer_a, buffer_r = [], [], []
+                    buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
-
+                    agent_index = np.random.randint(0, agent_num)
                 s = s_
                 total_step += 1
                 if done:
@@ -103,10 +106,10 @@ class Worker(object):
                         GLOBAL_RUNNING_R.append(ep_r)
                     else:
                         GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
-                    print(self.name,
-                        " | Ep:", GLOBAL_EP,
-                        " | Ep_r:", GLOBAL_RUNNING_R[-1],
-                        " | golbal_len:", len(GLOBAL_RUNNING_R))
+                    # print(self.name,
+                    #     " | Ep:", GLOBAL_EP,
+                    #     " | Ep_r:", GLOBAL_RUNNING_R[-1],
+                    #     " | golbal_len:", len(GLOBAL_RUNNING_R))
                     GLOBAL_EP += 1
                     break
 
@@ -123,11 +126,20 @@ class Worker(object):
                     env.render()
                     time.sleep(0.03)
 
+def save_model(path):
+    if os.path.isdir(path) is False:
+        os.makedirs(path)
+    saver.save(SESS, save_path=path)
+
+def load_model(path):
+    print("loading model")
+    load = tf.train.latest_checkpoint(path)
+    saver.restore(SESS, load)
+
 if __name__ == "__main__":
 
     SESS = tf.Session()
     env, world = make_env("trainer_1_test")
-
     with tf.device("/cpu:0"):
         OPT_A = tf.train.RMSPropOptimizer(LR_A, name='RMSPropA')
         OPT_C = tf.train.RMSPropOptimizer(LR_C, name='RMSPropC')
@@ -144,6 +156,7 @@ if __name__ == "__main__":
 
     #初始化所有变量
     SESS.run(tf.global_variables_initializer())
+    saver = tf.train.Saver()
 
     if OUTPUT_GRAPH:
         if os.path.exists(LOG_DIR):
@@ -159,6 +172,7 @@ if __name__ == "__main__":
         t.start()
         worker_threads.append(t)
     COORD.join(worker_threads)
+    save_model(path)
     worker_d.display()
 
     # plt.plot(np.arange(len(GLOBAL_RUNNING_R)), GLOBAL_RUNNING_R)

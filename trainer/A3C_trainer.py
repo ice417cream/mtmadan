@@ -17,24 +17,23 @@ class ACNet(object):
         else:   # local net, calculate losses
             with tf.variable_scope(scope):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
-                self.a_his = tf.placeholder(tf.int32, [None, len(obs_shape_n)], 'A')
-                self.v_target = tf.placeholder(tf.float32, [None, len(obs_shape_n)], 'Vtarget')
+                self.a_his = tf.placeholder(tf.int32, [None, 1], 'A')
+                self.v_target = tf.placeholder(tf.float32, [None, 1], 'Vtarget')
 
                 self.a_prob, self.v, self.a_params, self.c_params = self._build_net(scope)
 
-                td = tf.subtract(self.v_target, tf.reshape(self.v, tf.shape(self.v_target)), name='TD_error')
+                td = tf.subtract(self.v_target, self.v, name='TD_error')
                 with tf.name_scope('c_loss'):
                     self.c_loss = tf.reduce_mean(tf.square(td))
 
                 with tf.name_scope('a_loss'):
-                    test = tf.reshape(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), tf.shape(self.a_prob))
+                    #test = tf.reshape(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), tf.shape(self.a_prob))
 
-                    #TODO [-1]处需要调整
-                    log_prob = tf.reduce_sum(tf.log(self.a_prob + 1e-5) * test, axis=1, keep_dims=True)
-                    exp_v = log_prob * tf.stop_gradient(tf.reshape(td, tf.shape(log_prob)))
-                    entropy = -tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),
+                    log_prob = tf.reduce_sum(tf.log(self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=1, keep_dims=True)
+                    exp_v = log_prob * tf.stop_gradient(td)
+                    entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),
                                              axis=1, keep_dims=True)  # encourage exploration
-                    self.exp_v = 0.001 * entropy + exp_v
+                    self.exp_v = 0.0 * entropy + exp_v
                     self.a_loss = tf.reduce_mean(-self.exp_v)
 
                 with tf.name_scope('local_grad'):
