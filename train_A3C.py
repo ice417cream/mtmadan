@@ -11,10 +11,10 @@ import trainer.A3C_trainer as T
 OUTPUT_GRAPH = True
 LOG_DIR = './log'
 N_WORKERS = os.cpu_count()
-MAX_EP_STEP = 50
-MAX_GLOBAL_EP = 2000
+MAX_EP_STEP = 100
+MAX_GLOBAL_EP = 5000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 10
+UPDATE_GLOBAL_ITER = 50
 GAMMA = 0.9
 ENTROPY_BETA = 0.01
 LR_A = 0.01    # learning rate for actor
@@ -53,7 +53,7 @@ class Worker(object):
     def __init__(self, name, env, globalAC):
         self.env = env
         self.name = name
-        self.AC = T.ACNet(name, env, OPT_A, OPT_C, SESS, globalAC=globalAC)
+        self.AC = T.ACNet(name, env, OPT_A, OPT_C, SESS, GAMMA, globalAC=globalAC)
 
     def work(self):
         global GLOBAL_RUNNING_R, GLOBAL_EP
@@ -81,21 +81,24 @@ class Worker(object):
                     if done:
                         v_s_ = 0   # terminal
                     else:
-                        v_s_ = SESS.run(self.AC.v, {self.AC.s: s_})[0, 0]
-
+                        buffer_v_s_ = SESS.run(self.AC.v, {self.AC.s: buffer_s_})
+                    v_s_ = buffer_v_s_[0, 0]
                     buffer_v_target = []
                     for r in buffer_r[::-1]:  # reverse buffer r
                         v_s_ = r + GAMMA * v_s_
                         buffer_v_target.append(v_s_)
                     buffer_v_target.reverse()
+                    # buffer_v_target = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1)) + GAMMA * v_s_
                     buffer_s, buffer_a, buffer_v_target = np.vstack(buffer_s), np.vstack(buffer_a), np.vstack(buffer_v_target)
-
+                    buffer_r = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1))
                     feed_dict = {
                         self.AC.s: buffer_s,
                         self.AC.a_his: np.array(buffer_a),
                         self.AC.v_target: np.array(buffer_v_target),
+                        self.AC.reward: buffer_r,
+                        self.AC.v_s_: buffer_v_s_,
                     }
-                    print(ep_t, " | log_prob", SESS.run(self.AC.log_prob, feed_dict=feed_dict))
+                    print(GLOBAL_EP, " | a_loss,  c_loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
                     self.AC.update_global(feed_dict)
                     buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
@@ -115,17 +118,18 @@ class Worker(object):
                     break
 
     def display(self):
-            for i in range (10):
-                observation = env.reset()
-                for i in range(50):
-                    action_env = []
-                    action = self.AC.choose_action(observation)
-                    for act in action:
-                        action_env.append(action_dict[str(int(act))])  # 定义动作，采用字典的方式
-                    observation_, reward, done, info = env.step(action_env)
-                    observation = observation_
-                    env.render()
-                    time.sleep(0.03)
+        #self.AC.pull_global()
+        for i in range (100):
+            observation = env.reset()
+            for i in range(50):
+                action_env = []
+                action = self.AC.choose_action(observation)
+                for act in action:
+                    action_env.append(action_dict[str(int(act))])  # 定义动作，采用字典的方式
+                observation_, reward, done, info = env.step(action_env)
+                observation = observation_
+                env.render()
+                time.sleep(0.03)
 
 def save_model(path):
     if os.path.isdir(path) is False:
@@ -144,7 +148,7 @@ if __name__ == "__main__":
     with tf.device("/cpu:0"):
         OPT_A = tf.train.RMSPropOptimizer(LR_A, name='RMSPropA')
         OPT_C = tf.train.RMSPropOptimizer(LR_C, name='RMSPropC')
-        GLOBAL_AC = T.ACNet(GLOBAL_NET_SCOPE, env, OPT_A, OPT_C, SESS)  # we only need its params
+        GLOBAL_AC = T.ACNet(GLOBAL_NET_SCOPE, env, OPT_A, OPT_C, SESS, GAMMA)  # we only need its params
         workers = []
         # Create worker
         for i in range(N_WORKERS):

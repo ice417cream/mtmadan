@@ -3,8 +3,10 @@ import numpy as np
 import gym
 
 class ACNet(object):
-    def __init__(self, scope, env, OPT_A, OPT_C, SESS, globalAC=None):
+    def __init__(self, scope, env, OPT_A, OPT_C, SESS, Gamma, globalAC=None):
         self.env = env
+        self.Gamma = Gamma
+
         obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
         N_S = obs_shape_n[0][0]
         self.N_A = 9
@@ -19,6 +21,8 @@ class ACNet(object):
                 self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
                 self.a_his = tf.placeholder(tf.int32, [None, 1], 'A')
                 self.v_target = tf.placeholder(tf.float32, [None, 1], 'Vtarget')
+                self.v_s_ = tf.placeholder(tf.float32, [None, 1], 'v_s_')
+                self.reward = tf.placeholder(tf.float32, [None, 1], 'Reward')
 
                 self.a_prob, self.v, self.a_params, self.c_params = self._build_net(scope)
 
@@ -29,12 +33,14 @@ class ACNet(object):
                 with tf.name_scope('a_loss'):
                     #test = tf.reshape(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), tf.shape(self.a_prob))
 
-                    self.log_prob = tf.reduce_sum(tf.log(self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=1, keep_dims=True)
-                    exp_v = self.log_prob * tf.stop_gradient(td)
-                    entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),
-                                             axis=1, keep_dims=True)  # encourage exploration
+                    self.log_prob = tf.reduce_sum((self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=2, keep_dims=True)
+                    exp_v = self.log_prob * (self.reward + self.Gamma * tf.stop_gradient(self.v_s_) - tf.stop_gradient(self.v))
+                    entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),axis=1, keep_dims=True)  # encourage exploration
                     self.exp_v = 0.0 * entropy + exp_v
                     self.a_loss = tf.reduce_mean(-self.exp_v)
+
+                with tf.name_scope('total_loss'):
+                    total_loss = self.a_loss + self.c_loss
 
                 with tf.name_scope('local_grad'):
                     self.a_grads = tf.gradients(self.a_loss, self.a_params)
