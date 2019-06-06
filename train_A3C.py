@@ -17,8 +17,8 @@ GLOBAL_NET_SCOPE = 'Global_Net'
 UPDATE_GLOBAL_ITER = 50
 GAMMA = 0.9
 ENTROPY_BETA = 0.01
-LR_A = 0.01    # learning rate for actor
-LR_C = 0.01    # learning rate for critic
+LR_A = 0.1    # learning rate for actor
+LR_C = 0.1    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
 agent_num = 1
@@ -59,6 +59,7 @@ class Worker(object):
         global GLOBAL_RUNNING_R, GLOBAL_EP
         total_step = 1
         buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
+        a_l, c_l = 0, 0
         while not COORD.should_stop() and GLOBAL_EP < MAX_GLOBAL_EP:
             s = self.env.reset()
             ep_r = 0
@@ -86,8 +87,7 @@ class Worker(object):
                         v_s_ = r + GAMMA * v_s_
                         buffer_v_target.append(v_s_)
                     buffer_v_target.reverse()
-                    #print(GLOBAL_EP, " | v_target:", buffer_v_target)
-                    # buffer_v_target = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1)) + GAMMA * v_s_
+
                     buffer_s, buffer_a, buffer_v_target = np.vstack(buffer_s), np.vstack(buffer_a), np.vstack(buffer_v_target)
                     buffer_r = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1))
                     feed_dict = {
@@ -97,8 +97,8 @@ class Worker(object):
                         self.AC.reward: buffer_r,
                         self.AC.v_s_: buffer_v_s_,
                     }
-                    print(GLOBAL_EP, " | a_loss,  c_loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
-                    self.AC.update_global(feed_dict)
+                    #print(GLOBAL_EP, " | a_loss,  c_loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
+                    a_l, c_l = self.AC.update_global(feed_dict)
                     buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
                     agent_index = np.random.randint(0, agent_num)
@@ -109,10 +109,10 @@ class Worker(object):
                         GLOBAL_RUNNING_R.append(ep_r)
                     else:
                         GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
-                    # print(self.name,
-                    #     " | Ep:", GLOBAL_EP,
-                    #     " | Ep_r:", GLOBAL_RUNNING_R[-1],
-                    #     " | golbal_len:", len(GLOBAL_RUNNING_R))
+                    print(self.name,
+                        " | Ep:", GLOBAL_EP,
+                        " | a_loss", a_l,
+                        " | c_loss", c_l, )
                     GLOBAL_EP += 1
                     break
 
@@ -162,12 +162,12 @@ if __name__ == "__main__":
     SESS.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
 
-    if OUTPUT_GRAPH:
-        if os.path.exists(LOG_DIR):
-            #递归删除文件夹
-            shutil.rmtree(LOG_DIR)
-        #将tf的图写入文件夹
-        tf.summary.FileWriter(LOG_DIR, SESS.graph)
+    # if OUTPUT_GRAPH:
+    #     if os.path.exists(LOG_DIR):
+    #         #递归删除文件夹
+    #         shutil.rmtree(LOG_DIR)
+    #     #将tf的图写入文件夹
+    #     tf.summary.FileWriter(LOG_DIR, SESS.graph)
 
     worker_threads = []
     for worker in workers:

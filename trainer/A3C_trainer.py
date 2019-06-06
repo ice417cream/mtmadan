@@ -67,8 +67,8 @@ class ACNet(object):
         return a_prob, v, a_params, c_params
 
     def update_global(self, feed_dict):  # run by a local
-        self.SESS.run([self.update_a_op, self.update_c_op], feed_dict)  # local grads applies to global net
-
+        _, _, a_l, c_l = self.SESS.run([self.update_a_op, self.update_c_op, self.a_loss, self.c_loss], feed_dict)  # local grads applies to global net
+        return a_l, c_l
     def pull_global(self):  # run by a local
         self.SESS.run([self.pull_a_params_op, self.pull_c_params_op])
 
