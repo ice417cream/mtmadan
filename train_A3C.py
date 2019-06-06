@@ -68,6 +68,7 @@ class Worker(object):
                 a = self.AC.choose_action(s)
                 for act in a:
                     action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
+
                 s_, r, done, info = self.env.step(action_env)
                 done = True if ep_t == MAX_EP_STEP - 1 else False
 
