@@ -29,8 +29,8 @@ class ACNet(object):
                 with tf.name_scope('a_loss'):
                     #test = tf.reshape(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), tf.shape(self.a_prob))
 
-                    log_prob = tf.reduce_sum(tf.log(self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=1, keep_dims=True)
-                    exp_v = log_prob * tf.stop_gradient(td)
+                    self.log_prob = tf.reduce_sum(tf.log(self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=1, keep_dims=True)
+                    exp_v = self.log_prob * tf.stop_gradient(td)
                     entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),
                                              axis=1, keep_dims=True)  # encourage exploration
                     self.exp_v = 0.0 * entropy + exp_v

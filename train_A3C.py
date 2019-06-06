@@ -11,10 +11,10 @@ import trainer.A3C_trainer as T
 OUTPUT_GRAPH = True
 LOG_DIR = './log'
 N_WORKERS = os.cpu_count()
-MAX_EP_STEP = 5
+MAX_EP_STEP = 50
 MAX_GLOBAL_EP = 2000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 5
+UPDATE_GLOBAL_ITER = 10
 GAMMA = 0.9
 ENTROPY_BETA = 0.01
 LR_A = 0.01    # learning rate for actor
@@ -76,6 +76,7 @@ class Worker(object):
                 buffer_a.append(a[agent_index])
                 buffer_r.append(r[0, agent_index])  # normalize
                 buffer_s_.append(s_[agent_index, :])
+
                 if total_step % UPDATE_GLOBAL_ITER == 0 or done:   # update global and assign to local net
                     if done:
                         v_s_ = 0   # terminal
@@ -94,7 +95,7 @@ class Worker(object):
                         self.AC.a_his: np.array(buffer_a),
                         self.AC.v_target: np.array(buffer_v_target),
                     }
-                    print(ep_t, " | a c loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
+                    print(ep_t, " | log_prob", SESS.run(self.AC.log_prob, feed_dict=feed_dict))
                     self.AC.update_global(feed_dict)
                     buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
