@@ -77,17 +77,15 @@ class Worker(object):
                 buffer_r.append(r[0, agent_index])  # normalize
                 buffer_s_.append(s_[agent_index, :])
 
-                if total_step % UPDATE_GLOBAL_ITER == 0 or done:   # update global and assign to local net
-                    if done:
-                        v_s_ = 0   # terminal
-                    else:
-                        buffer_v_s_ = SESS.run(self.AC.v, {self.AC.s: buffer_s_})
+                if total_step % UPDATE_GLOBAL_ITER == 0 :   # update global and assign to local net
+                    buffer_v_s_ = SESS.run(self.AC.v, {self.AC.s: buffer_s_})
                     v_s_ = buffer_v_s_[0, 0]
                     buffer_v_target = []
                     for r in buffer_r[::-1]:  # reverse buffer r
                         v_s_ = r + GAMMA * v_s_
                         buffer_v_target.append(v_s_)
                     buffer_v_target.reverse()
+                    #print(GLOBAL_EP, " | v_target:", buffer_v_target)
                     # buffer_v_target = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1)) + GAMMA * v_s_
                     buffer_s, buffer_a, buffer_v_target = np.vstack(buffer_s), np.vstack(buffer_a), np.vstack(buffer_v_target)
                     buffer_r = np.reshape(np.array([buffer_r]), (UPDATE_GLOBAL_ITER, 1))
