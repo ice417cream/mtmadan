@@ -60,13 +60,14 @@ class Worker(object):
         total_step = 1
         buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
         a_l, c_l = 0, 0
+        buffer_v_target = []
         while not COORD.should_stop() and GLOBAL_EP < MAX_GLOBAL_EP:
             s = self.env.reset()
             ep_r = 0
             agent_index = np.random.randint(0, agent_num)
             for ep_t in range(MAX_EP_STEP):
                 action_env = []
-                a = self.AC.choose_action(s)
+                a, prob_weights = self.AC.choose_action(s)
                 for act in a:
                     action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
 
@@ -97,8 +98,8 @@ class Worker(object):
                         self.AC.reward: buffer_r,
                         self.AC.v_s_: buffer_v_s_,
                     }
-                    #print(GLOBAL_EP, " | a_loss,  c_loss", SESS.run([self.AC.a_loss, self.AC.c_loss], feed_dict=feed_dict))
                     a_l, c_l = self.AC.update_global(feed_dict)
+                    time.sleep(0.01)
                     buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
                     agent_index = np.random.randint(0, agent_num)
@@ -112,7 +113,9 @@ class Worker(object):
                     print(self.name,
                         " | Ep:", GLOBAL_EP,
                         " | a_loss", a_l,
-                        " | c_loss", c_l, )
+                        " | c_loss", c_l,
+                        " | a", a,
+                        " | prob_weights", prob_weights)
                     GLOBAL_EP += 1
                     break
 

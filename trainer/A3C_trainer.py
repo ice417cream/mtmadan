@@ -34,7 +34,7 @@ class ACNet(object):
                     #test = tf.reshape(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), tf.shape(self.a_prob))
 
                     self.log_prob = tf.reduce_sum((self.a_prob + 1e-5) * tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=2, keep_dims=True)
-                    exp_v = self.log_prob * (self.reward + self.Gamma * tf.stop_gradient(self.v_s_) - tf.stop_gradient(self.v))
+                    exp_v = self.log_prob * (self.reward + self.Gamma * self.v_s_ - self.v)
                     entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),axis=1, keep_dims=True)  # encourage exploration
                     self.exp_v = 0.0 * entropy + exp_v
                     self.a_loss = tf.reduce_mean(-self.exp_v)
@@ -76,4 +76,4 @@ class ACNet(object):
         prob_weights = self.SESS.run(self.a_prob, feed_dict={self.s: s})
         a=[i for i in range(prob_weights.shape[1])]
         action = [ np.random.choice(a,p=prob_weights[i][:]) for i in range (prob_weights.shape[0])] # select action w.r.t the actions prob
-        return action
+        return action, prob_weights
