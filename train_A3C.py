@@ -11,11 +11,11 @@ import trainer.A3C_trainer as T
 OUTPUT_GRAPH = True
 LOG_DIR = './log'
 N_WORKERS = os.cpu_count()
-MAX_EP_STEP = 100
-MAX_GLOBAL_EP = 3000
+MAX_EP_STEP = 50
+MAX_GLOBAL_EP = 13000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 10
-GAMMA = 0.1
+UPDATE_GLOBAL_ITER = 50
+GAMMA = 0.9
 ENTROPY_BETA = 0.01
 LR_A = 0.01    # learning rate for actor
 LR_C = 0.01    # learning rate for critic

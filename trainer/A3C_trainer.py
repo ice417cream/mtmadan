@@ -25,18 +25,18 @@ class ACNet(object):
                 self.reward = tf.placeholder(tf.float32, [None, 1], 'Reward')
 
                 self.a_prob, self.v, self.a_params, self.c_params = self._build_net(scope)
-                #self.gae = tf.constant(0.0)
-                #self.a_l = tf.constant(0.0)
+                self.gae = tf.constant(0.0)
+                self.a_l = tf.constant(0.0)
                 td = tf.subtract(self.v_target, self.v, name='TD_error')
                 with tf.name_scope('c_loss'):
                     self.c_loss = tf.reduce_mean(tf.square(td))
 
                 with tf.name_scope('a_loss'):
                     self.log_prob = tf.reduce_sum((self.a_prob + 1e-5) * tf.squeeze(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=1), axis=[1], keep_dims=True)
-                    self.exp_v = self.log_prob * (self.reward + self.Gamma * self.v_s_ - self.v) * 0.01
+                    self.exp_v = self.log_prob * (self.reward + self.Gamma * self.v_s_ - self.v)
                     entropy = tf.reduce_sum(self.a_prob * tf.log(self.a_prob + 1e-5),axis=1, keep_dims=True)  # encourage exploration
                     self.exp_v = 0.0 * entropy + self.exp_v
-                    self.a_loss = tf.reduce_mean(self.exp_v)
+                    self.a_loss = tf.reduce_mean(-self.exp_v)
                     # self.one_hot = tf.squeeze(tf.one_hot(self.a_his, self.N_A, dtype=tf.float32), axis=[1])
                     # self.test = (self.a_prob + 1e-5) * self.one_hot
                     # self.log_prob = tf.reduce_sum(self.test, axis=[1])
@@ -49,7 +49,7 @@ class ACNet(object):
                     #     self.gae = self.gae * self.Gamma * 0.02
                     #     self.gae = self.gae + self.exp_v[i]
                     #     self.a_l = self.a_l + self.gae * self.log_prob[i]
-                    # self.a_loss = tf.reduce_mean(self.a_l)
+                    # self.a_loss = self.a_l
 
                 with tf.name_scope('local_grad'):
                     self.a_grads = tf.gradients(self.a_loss, self.a_params)
