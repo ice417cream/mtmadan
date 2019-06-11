@@ -112,8 +112,8 @@ class DQN_trainer():
             sample_index = np.random.choice(self.memory_counter, size=self.arglist.batch_size)
         batch_memory = self.memory[sample_index, :]
 
-        _, cost = self.sess.run(
-            [self._train_op, self.loss],
+        _, cost, q_out = self.sess.run(
+            [self._train_op, self.loss, self.q_next],
             feed_dict={
                 self.s: batch_memory[:, :self.n_features],
                 self.a: batch_memory[:, self.n_features],

@@ -12,13 +12,13 @@ OUTPUT_GRAPH = True
 LOG_DIR = './log'
 N_WORKERS = os.cpu_count()
 MAX_EP_STEP = 100
-MAX_GLOBAL_EP = 5000
+MAX_GLOBAL_EP = 3000
 GLOBAL_NET_SCOPE = 'Global_Net'
-UPDATE_GLOBAL_ITER = 50
-GAMMA = 0.9
+UPDATE_GLOBAL_ITER = 10
+GAMMA = 0.1
 ENTROPY_BETA = 0.01
-LR_A = 0.1    # learning rate for actor
-LR_C = 0.1    # learning rate for critic
+LR_A = 0.01    # learning rate for actor
+LR_C = 0.01    # learning rate for critic
 GLOBAL_RUNNING_R = []
 GLOBAL_EP = 0
 agent_num = 1
@@ -59,8 +59,9 @@ class Worker(object):
         global GLOBAL_RUNNING_R, GLOBAL_EP
         total_step = 1
         buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
-        a_l, c_l = 0, 0
+        buffer_a_his = []
         buffer_v_target = []
+        a_loss = 0
         while not COORD.should_stop() and GLOBAL_EP < MAX_GLOBAL_EP:
             s = self.env.reset()
             ep_r = 0
@@ -82,7 +83,7 @@ class Worker(object):
 
                 if total_step % UPDATE_GLOBAL_ITER == 0 :   # update global and assign to local net
                     buffer_v_s_ = SESS.run(self.AC.v, {self.AC.s: buffer_s_})
-                    v_s_ = buffer_v_s_[0, 0]
+                    v_s_ = buffer_v_s_[-1, 0]
                     buffer_v_target = []
                     for r in buffer_r[::-1]:  # reverse buffer r
                         v_s_ = r + GAMMA * v_s_
@@ -98,8 +99,8 @@ class Worker(object):
                         self.AC.reward: buffer_r,
                         self.AC.v_s_: buffer_v_s_,
                     }
-                    a_l, c_l = self.AC.update_global(feed_dict)
-                    time.sleep(0.01)
+                    a_loss, log_prob, aprob, c_loss = self.AC.update_global(feed_dict)
+                    buffer_a_his = buffer_a
                     buffer_s, buffer_a, buffer_r, buffer_s_ = [], [], [], []
                     self.AC.pull_global()
                     agent_index = np.random.randint(0, agent_num)
@@ -112,20 +113,24 @@ class Worker(object):
                         GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
                     print(self.name,
                         " | Ep:", GLOBAL_EP,
-                        " | a_loss", a_l,
-                        " | c_loss", c_l,
-                        " | a", a,
-                        " | prob_weights", prob_weights)
+                        " | a_loss", a_loss,
+                        " | c_loss", c_loss,
+                        " | log_prob.shape", log_prob.shape,
+                        " | aprob.shape", aprob.shape,
+                       )
+                        # " | a", a,
+                        # " | prob_weights", prob_weights)
                     GLOBAL_EP += 1
+                    buffer_a_his = []
                     break
 
     def display(self):
-        #self.AC.pull_global()
+        self.AC.pull_global()
         for i in range (100):
             observation = env.reset()
             for i in range(50):
                 action_env = []
-                action = self.AC.choose_action(observation)
+                action, _ = self.AC.choose_action(observation)
                 for act in action:
                     action_env.append(action_dict[str(int(act))])  # 定义动作，采用字典的方式
                 observation_, reward, done, info = env.step(action_env)
