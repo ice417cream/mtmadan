@@ -70,15 +70,20 @@ if __name__ == "__main__":
         for episode in range(arglist.train_step_max):
             observation = env.reset()
             start = time.time()
-
+            #随机生成agent索引
             agent_index = np.random.randint(0, arglist.agent_num)
+
+            #前向n步，存储训练数据
             for episode_step in range(arglist.episode_step_max):
-                # env.render()
-                #time.sleep(0.01)
                 action_env = []
+
+                #选择动作
                 action = trainer.choose_action(observation)
+
                 for act in action:
                     action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
+
+                #执行一步动作 获取数据
                 observation_, reward, done, info = env.step(action_env)
                 # if episode_step == 0:
                 #     reward_start = reward
@@ -93,6 +98,8 @@ if __name__ == "__main__":
                 observation = observation_
             # diff_rew = reward_start - reward_end
             # agent_index = np.argmax(diff_rew)
+
+            #开始训练
             trainer.learn()
             end = time.time()
             if episode % arglist.save_rate == 0:

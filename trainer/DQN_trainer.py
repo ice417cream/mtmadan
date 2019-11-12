@@ -88,9 +88,7 @@ class DQN_trainer():
         self.memory_counter += 1
 
     def choose_action(self, observation):
-        # to have batch dimension when feed into tf placeholder
-        observation = observation
-
+        #o = observation
         if np.random.uniform() < self.epsilon:
             # forward feed the observation and get q value for every actions
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})

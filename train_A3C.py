@@ -2,8 +2,8 @@
 import numpy as np
 import time
 import os
-import shutil
-import matplotlib.pyplot as plt
+#import shutil
+#import matplotlib.pyplot as plt
 import threading
 import tensorflow as tf
 import trainer.A3C_trainer as T
