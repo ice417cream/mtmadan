@@ -69,12 +69,17 @@ class DQN_trainer():
         # ------------------net update ------------------
         with tf.variable_scope('q_target'):
             q_target = self.r + self.arglist.gamma * tf.reduce_max(self.q_next, axis=1, name='Qmax_s_')# shape=(None, )
+
+            #截断q_target,组织target_net进行更新
             self.q_target = tf.stop_gradient(q_target)
+
         with tf.variable_scope('q_eval'):
             a_indices = tf.stack([tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a], axis=1)
             self.q_eval_wrt_a = tf.gather_nd(params=self.q_eval, indices=a_indices)  # shape=(None, )
+
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval_wrt_a, name='TD_error'))
+
         with tf.variable_scope('train'):
             self._train_op = tf.train.RMSPropOptimizer(self.arglist.lr).minimize(self.loss)
 

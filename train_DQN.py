@@ -70,25 +70,37 @@ if __name__ == "__main__":
     step  = 0
 
     if arglist.train:
+
+        # 循环训练步数
         for episode in range(arglist.train_step_max):
             observation = env.reset()
             start = time.time()
-
+            #随机产生一个agent的索引
             agent_index = np.random.randint(0, arglist.agent_num)
+
+           #在环境中agent执行的步数
             for episode_step in range(arglist.episode_step_max):
-                # env.render()
-                #time.sleep(0.01)
                 action_env = []
+
+                #选择动作，list,大小为agent数量
                 action = trainer.choose_action(observation)
+
                 for act in action:
                     action_env.append(action_dict[str(int(act))])#定义动作，采用字典的方式
+
+                #所有agent在env中执行一步
                 observation_, reward, done, info = env.step(action_env)
+
                 # if episode_step == 0:
                 #     reward_start = reward
                 # elif episode_step == episode_step_max - 1:
                 #     reward_end = reward
+
+                #整理数据
                 action = np.reshape(action, [arglist.agent_num, 1])
                 reward = np.reshape(reward, [arglist.agent_num, 1])
+
+                #存储随机抽取的agent的数据
                 trainer.store_transition(observation[agent_index],
                                          action[agent_index],
                                          reward[agent_index],
@@ -96,7 +108,10 @@ if __name__ == "__main__":
                 observation = observation_
             # diff_rew = reward_start - reward_end
             # agent_index = np.argmax(diff_rew)
+
+            #开始训练一次
             trainer.learn()
+
             end = time.time()
             if episode % arglist.save_rate == 0:
                 trainer.save_model(arglist.save_dir, episode)
